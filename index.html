@@ -75,7 +75,8 @@
   .icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #e2dcf5; }
   .icon-btn.off { opacity: .45; }
   .right-tools { display: flex; gap: 10px; }
-  body.mode-pad #hintBtn { visibility: hidden; }
+  body.mode-pad #hintBtn { display: none; }
+  #wordsBtn.on { background: var(--accent-2); color: #fff; box-shadow: 0 4px 0 #4b3bc4; }
 
   /* ---------- Screens ---------- */
   main { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0 16px 14px; }
@@ -328,6 +329,76 @@
     pointer-events: none;
   }
 
+  /* ---------- Voice settings ---------- */
+  .dlg {
+    border: 0; border-radius: 28px;
+    padding: 24px 28px;
+    width: min(560px, calc(100vw - 32px));
+    color: var(--ink); font-family: var(--font);
+    box-shadow: 0 20px 60px rgba(45, 42, 74, .3);
+  }
+  .dlg::backdrop { background: rgba(45, 42, 74, .35); }
+  .dlg h2 { margin: 0 0 18px; font-size: 28px; }
+  .field { margin-bottom: 18px; }
+  .field-label { display: block; font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .field .row { display: flex; gap: 10px; align-items: center; }
+  .field select {
+    flex: 1; min-width: 0;
+    font: inherit; font-size: 18px; color: inherit;
+    padding: 10px 12px;
+    border-radius: 14px; border: 2px solid #e2dcf5; background: #fff;
+  }
+  .field input[type=range] { flex: 1; accent-color: var(--accent-2); }
+  .field .row .end { font-size: 16px; color: var(--ink-soft); white-space: nowrap; }
+  .tip { font-size: 16px; line-height: 1.45; color: var(--ink-soft); background: #f6f3ff; border-radius: 14px; padding: 10px 14px; margin: 0 0 18px; }
+  .dlg-actions { display: flex; justify-content: flex-end; }
+
+  /* ---------- Magic words panel (Write tab) ---------- */
+  .pad-body { flex: 1; min-height: 0; display: flex; gap: 14px; position: relative; }
+  .pad-body .paper { min-width: 0; }
+  .words-panel {
+    display: none;
+    flex-direction: column;
+    width: 340px; flex: none;
+    background: var(--card);
+    border-radius: 28px;
+    box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
+    overflow: hidden;
+  }
+  .words-panel.open { display: flex; }
+  .wp-head { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 10px; border-bottom: 2px solid #f1eeff; }
+  .wp-title { display: flex; align-items: center; justify-content: space-between; }
+  .wp-title h2 { margin: 0; font-size: 24px; }
+  .wp-close { border: 0; background: #f1eeff; width: 38px; height: 38px; border-radius: 50%; font-size: 16px; }
+  .wp-head .seg { align-self: flex-start; background: #f1eeff; box-shadow: none; }
+  .wp-head .seg button { padding: 6px 14px; font-size: 17px; }
+  .wp-search {
+    font: inherit; font-size: 18px; color: inherit;
+    padding: 8px 14px;
+    border-radius: 999px; border: 2px solid #e2dcf5; outline: none;
+    user-select: text; -webkit-user-select: text;
+  }
+  .wp-search:focus { border-color: var(--accent-2); }
+  .wp-count { font-size: 15px; color: var(--ink-soft); }
+  .word-scroll { flex: 1; overflow-y: auto; padding: 4px 16px 20px; }
+  .word-group { margin: 14px 0 8px; font-size: 22px; font-weight: 700; color: var(--accent-2); }
+  .word-group small { font-size: 15px; font-weight: 500; color: var(--ink-soft); }
+  .word-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .word-chip {
+    border: 0; background: #f6f3ff;
+    border-radius: 999px;
+    padding: 4px 12px 4px 8px;
+    font-size: 17px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
+    box-shadow: 0 3px 0 #e2dcf5;
+  }
+  .word-chip:active { transform: translateY(2px); box-shadow: 0 1px 0 #e2dcf5; }
+  .word-empty { padding: 30px 10px; text-align: center; font-size: 18px; color: var(--ink-soft); }
+  /* Narrow screens: the panel slides over the right side of the notepad */
+  @media (max-width: 760px) {
+    .words-panel { position: absolute; top: 0; right: 0; bottom: 0; z-index: 5; width: min(340px, 88%); box-shadow: 0 20px 50px rgba(45, 42, 74, .3); }
+  }
+
   /* ---------- On-screen keyboard ---------- */
   .keyboard { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 4px; margin-top: 18px; /* clears the cards' 10px drop shadow */ }
   body.mode-pad .keyboard { display: none; }
@@ -384,6 +455,7 @@
   </nav>
   <div class="right-tools">
     <button class="icon-btn" id="hintBtn" aria-label="Key hints">💡</button>
+    <button class="icon-btn" id="voiceBtn" aria-label="Voices">🗣️</button>
     <button class="icon-btn" id="muteBtn" aria-label="Sound on or off">🔊</button>
   </div>
 </header>
@@ -396,11 +468,29 @@
       <button class="chunky" id="biggerBtn" aria-label="Bigger letters">🔍 A+</button>
       <button class="chunky primary" id="readBtn">🔊 Read it</button>
       <button class="chunky" id="clearBtn">✨ New page</button>
+      <button class="chunky" id="wordsBtn">📖 Magic words</button>
     </div>
-    <div class="paper" id="paper">
-      <div id="padDisplay"></div>
-      <div class="pad-hint" id="padHint">Type a word like <b>cat</b>, <b>pizza</b> or <b>rocket</b><br>then press <kbd>space</kbd> ✨</div>
-      <textarea class="hidden-input" id="padInput" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Notepad"></textarea>
+    <div class="pad-body">
+      <div class="paper" id="paper">
+        <div id="padDisplay"></div>
+        <div class="pad-hint" id="padHint">Type a word like <b>cat</b>, <b>pizza</b> or <b>rocket</b><br>then press <kbd>space</kbd> ✨</div>
+        <textarea class="hidden-input" id="padInput" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Notepad"></textarea>
+      </div>
+      <aside class="words-panel" id="wordsPanel" aria-label="Magic words">
+        <div class="wp-head">
+          <div class="wp-title">
+            <h2>📖 Magic words</h2>
+            <button class="wp-close" id="wordsClose" aria-label="Close magic words">✖️</button>
+          </div>
+          <div class="seg" id="wordsView">
+            <button data-view="topic">🗂️ Topics</button>
+            <button data-view="az">🔤 A–Z</button>
+          </div>
+          <input class="wp-search" id="wordsSearch" type="search" placeholder="🔍 Find a word" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Find a word">
+          <div class="wp-count" id="wordsCount"></div>
+        </div>
+        <div class="word-scroll" id="wordsList"></div>
+      </aside>
     </div>
   </section>
 
@@ -492,6 +582,36 @@
   <div class="keyboard" id="keyboard"></div>
 </main>
 
+<dialog class="dlg" id="voiceDlg">
+  <form method="dialog">
+    <h2>🗣️ Voices</h2>
+    <div class="field">
+      <span class="field-label">Voice for letters and words</span>
+      <div class="row">
+        <select id="narratorSel" aria-label="Voice for letters and words"></select>
+        <button type="button" class="chunky primary" id="narratorTest">▶️ Test</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="field-label">👾 Monster voice</span>
+      <div class="row">
+        <select id="monsterSel" aria-label="Monster voice"></select>
+        <button type="button" class="chunky primary" id="monsterTest">▶️ Test</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="field-label">👾 Monster pitch</span>
+      <div class="row">
+        <span class="end">🐻 low</span>
+        <input type="range" id="monsterPitch" min="0.3" max="1.6" step="0.05" aria-label="Monster pitch">
+        <span class="end">🐭 high</span>
+      </div>
+    </div>
+    <p class="tip">Want nicer voices? On a Mac, open System Settings → Accessibility → Spoken Content → System Voice → Manage Voices, download an English voice marked Premium or Enhanced, then restart the browser.</p>
+    <div class="dlg-actions"><button class="chunky" value="done">Done</button></div>
+  </form>
+</dialog>
+
 <div id="fx"></div>
 
 <script>
@@ -525,47 +645,127 @@ function makeBag(items) {
 }
 
 /* ================= Emoji words ================= */
-const EMOJI_LIST = `
-cat🐱 kitty🐱 kitten🐱 dog🐶 puppy🐶 pig🐷 cow🐮 horse🐴 pony🐴 sheep🐑 goat🐐 chicken🐔 hen🐔 duck🦆
-bird🐦 owl🦉 penguin🐧 frog🐸 fish🐟 whale🐳 shark🦈 dolphin🐬 octopus🐙 crab🦀 turtle🐢 snake🐍
-lion🦁 tiger🐯 bear🐻 panda🐼 koala🐨 monkey🐵 zebra🦓 giraffe🦒 elephant🐘 mouse🐭 mice🐭 rabbit🐰
-bunny🐰 fox🦊 wolf🐺 bee🐝 ant🐜 bug🐛 butterfly🦋 snail🐌 spider🕷️ bat🦇 unicorn🦄 dragon🐉
-dinosaur🦕 dino🦖 trex🦖
-apple🍎 banana🍌 grape🍇 grapes🍇 orange🍊 lemon🍋 cherry🍒 strawberry🍓 watermelon🍉 melon🍈 pear🍐
-peach🍑 carrot🥕 corn🌽 broccoli🥦 pizza🍕 burger🍔 hamburger🍔 fries🍟 hotdog🌭 taco🌮 bread🍞
-cheese🧀 egg🥚 milk🥛 cake🎂 cupcake🧁 cookie🍪 donut🍩 candy🍬 lollipop🍭 chocolate🍫 icecream🍦
-ice🧊 popcorn🍿 pie🥧 juice🧃 water💧 rice🍚 noodles🍜 yam🍠
-sun☀️ moon🌙 star⭐ cloud☁️ rain🌧️ snow❄️ snowman⛄ rainbow🌈 fire🔥 tree🌳 flower🌸 rose🌹 leaf🍃
-earth🌍 world🌍 ocean🌊 sea🌊 wave🌊 beach🏖️ mountain⛰️ volcano🌋
-car🚗 bus🚌 truck🚚 train🚆 plane✈️ airplane✈️ boat⛵ ship🚢 rocket🚀 bike🚲 bicycle🚲 tractor🚜
-police🚓 ambulance🚑 firetruck🚒 helicopter🚁
-ball⚽ soccer⚽ basketball🏀 football🏈 baseball⚾ book📖 pencil✏️ crayon🖍️ paint🎨 music🎵 guitar🎸
-drum🥁 piano🎹 violin🎻 game🎮 gift🎁 present🎁 balloon🎈 party🎉 birthday🎂 robot🤖 teddy🧸 toy🧸
-house🏠 home🏠 school🏫 castle🏰 bed🛏️ door🚪 key🔑 phone📱 computer💻 tv📺 clock⏰ lamp💡 light💡
-bell🔔 box📦 map🗺️ hat🎩 crown👑 sock🧦 shoe👟 shirt👕 dress👗 glasses👓 umbrella☂️
-mom👩 mommy👩 mama👩 dad👨 daddy👨 papa👨 baby👶 boy👦 girl👧 grandma👵 grandpa👴 king🤴 prince🤴
-queen👸 princess👸 ghost👻 alien👽 monster👾
-love❤️ heart❤️ happy😀 smile😊 sad😢 cry😭 mad😠 angry😠 silly🤪 funny😂 laugh😂 cool😎 wow😮
-scared😱 sleep😴 sleepy😴 tired😴 sick🤒 kiss😘 hug🤗 hi👋 hello👋 bye👋 yes👍 good👍 ok👌
-red🔴 blue🔵 green🟢 yellow🟡 purple🟣 black⚫ white⚪ brown🟤
-run🏃 swim🏊 dance💃 sing🎤 eat🍽️
-hand✋ foot🦶 feet🦶 eye👀 eyes👀 nose👃 ear👂 mouth👄 tooth🦷 teeth🦷 brain🧠
-poop💩
-`;
+// Magic words for Write, by topic. Each entry is word + emoji; plurals like "cats" work automatically.
+const TOPICS = {
+  'Animals': `
+cat🐱 kitty🐱 kitten🐱 dog🐶 puppy🐶 pig🐷 cow🐮 horse🐴 pony🐴 sheep🐑 goat🐐 chicken🐔 hen🐔 duck🦆 bird🐦 owl🦉 penguin🐧
+frog🐸 fish🐟 whale🐳 shark🦈 dolphin🐬 octopus🐙 crab🦀 turtle🐢 snake🐍 lion🦁 tiger🐯 bear🐻 panda🐼 koala🐨 monkey🐵
+zebra🦓 giraffe🦒 elephant🐘 mouse🐭 mice🐭 rabbit🐰 bunny🐰 fox🦊 wolf🐺 bee🐝 ant🐜 bug🐛 butterfly🦋 snail🐌 spider🕷️
+bat🦇 unicorn🦄 dragon🐉 dinosaur🦕 dino🦖 trex🦖 alligator🐊 crocodile🐊 gorilla🦍 ape🦍 orangutan🦧 hippo🦛
+hippopotamus🦛 rhino🦏 camel🐫 llama🦙 alpaca🦙 kangaroo🦘 hedgehog🦔 porcupine🦔 squirrel🐿️ chipmunk🐿️ raccoon🦝
+skunk🦨 sloth🦥 otter🦦 beaver🦫 badger🦡 deer🦌 reindeer🦌 moose🫎 bison🦬 ox🐂 bull🐂 buffalo🐃 lamb🐑 ram🐏 donkey🫏
+leopard🐆 cheetah🐆 boar🐗 hog🐗 poodle🐩 doggy🐶 doggie🐶 pup🐶 hamster🐹 rat🐀 parrot🦜 peacock🦚 flamingo🦩 swan🦢 goose🪿
+turkey🦃 rooster🐓 chick🐤 duckling🐥 eagle🦅 dove🕊️ dodo🦤 mammoth🦣 lizard🦎 gecko🦎 iguana🦎 tortoise🐢 toad🐸 squid🦑
+shrimp🦐 lobster🦞 oyster🦪 jellyfish🪼 seal🦭 walrus🦭 coral🪸 shell🐚 seashell🐚 pufferfish🐡 blowfish🐡 goldfish🐠
+scorpion🦂 ladybug🐞 beetle🪲 cricket🦗 grasshopper🦗 caterpillar🐛 worm🪱 mosquito🦟 bumblebee🐝 honeybee🐝 germ🦠 web🕸️
+spiderweb🕸️ feather🪶 nest🪹 paw🐾 pet🐾 brontosaurus🦕
+`,
+  'Food & drink': `
+apple🍎 banana🍌 grape🍇 grapes🍇 orange🍊 lemon🍋 cherry🍒 strawberry🍓 watermelon🍉 melon🍈 pear🍐 peach🍑 carrot🥕 corn🌽
+broccoli🥦 pizza🍕 burger🍔 hamburger🍔 fries🍟 hotdog🌭 taco🌮 bread🍞 cheese🧀 egg🥚 milk🥛 cake🎂 cupcake🧁 cookie🍪
+donut🍩 candy🍬 lollipop🍭 chocolate🍫 icecream🍦 ice🧊 popcorn🍿 pie🥧 juice🧃 water💧 rice🍚 noodles🍜 yam🍠 avocado🥑
+bagel🥯 bacon🥓 pancake🥞 waffle🧇 butter🧈 croissant🥐 pretzel🥨 sandwich🥪 burrito🌯 salad🥗 soup🍲 stew🍲 spaghetti🍝
+pasta🍝 sushi🍣 dumpling🥟 ramen🍜 curry🍛 steak🥩 meat🍖 drumstick🍗 cereal🥣 oatmeal🥣 honey🍯 toast🍞 pickle🥒 cucumber🥒
+tomato🍅 potato🥔 pea🫛 peas🫛 bean🫘 beans🫘 garlic🧄 onion🧅 pepper🌶️ chili🌶️ mushroom🍄 olive🫒 peanut🥜 nut🥜 coconut🥥
+pineapple🍍 mango🥭 kiwi🥝 blueberry🫐 tangerine🍊 lettuce🥬 cabbage🥬 salt🧂 pudding🍮 flan🍮 sundae🍨 muffin🧁 tea🍵
+milkshake🥤 smoothie🥤 soda🥤 lemonade🍋 bottle🍼 bento🍱 lunchbox🍱 falafel🧆 tamale🫔 breakfast🥞 dinner🍽️ yummy😋 yum😋
+delicious😋 tasty😋 snack🍿 dessert🍨
+`,
+  'Nature, weather & space': `
+sun☀️ moon🌙 star⭐ cloud☁️ rain🌧️ snow❄️ snowman⛄ rainbow🌈 fire🔥 tree🌳 flower🌸 rose🌹 leaf🍃 earth🌍 world🌍 ocean🌊
+sea🌊 wave🌊 beach🏖️ mountain⛰️ volcano🌋 sunny☀️ rainy🌧️ snowy❄️ snowflake❄️ wind🌬️ windy🌬️ tornado🌪️ storm⛈️
+thunder⛈️ lightning⚡ fog🌫️ foggy🌫️ planet🪐 saturn🪐 comet☄️ galaxy🌌 astronaut🧑‍🚀 telescope🔭 ufo🛸 sunflower🌻
+tulip🌷 daisy🌼 blossom🌸 cactus🌵 palm🌴 clover🍀 lucky🍀 shamrock☘️ seed🌱 sprout🌱 plant🌱 wood🪵 log🪵 rock🪨 stone🪨
+island🏝️ desert🏜️ forest🌲 jungle🌴 camping🏕️ tent⛺ park🏞️ sunrise🌅 sunset🌇 night🌃 stars🌟 leaves🍂 autumn🍂
+summer☀️ winter☃️ lotus🪷 sparkle✨ sparkles✨ bubble🫧 bubbles🫧
+`,
+  'Places': `
+house🏠 home🏠 school🏫 castle🏰 hospital🏥 library📚 store🏪 shop🛍️ shopping🛍️ farm🧑‍🌾 city🏙️ town🏘️ hut🛖
+playground🛝 slide🛝 stadium🏟️ circus🎪 carnival🎡 museum🏛️ bridge🌉 road🛣️ office🏢 factory🏭 mailbox📫 mail📬
+letter✉️ envelope✉️ zoo🦁
+`,
+  'Things that go': `
+car🚗 bus🚌 truck🚚 train🚆 plane✈️ airplane✈️ boat⛵ ship🚢 rocket🚀 bike🚲 bicycle🚲 tractor🚜 police🚓 ambulance🚑
+firetruck🚒 helicopter🚁 taxi🚕 van🚐 jeep🚙 racecar🏎️ motorcycle🏍️ scooter🛴 skateboard🛹 sled🛷 canoe🛶 kayak🛶
+sailboat⛵ ferry⛴️ anchor⚓ parachute🪂 tram🚊 trolley🚎 subway🚇 wheel🛞 stop🛑
+`,
+  'Home & things': `
+book📖 pencil✏️ crayon🖍️ paint🎨 bed🛏️ door🚪 key🔑 phone📱 computer💻 tv📺 clock⏰ lamp💡 light💡 bell🔔 box📦 map🗺️
+umbrella☂️ chair🪑 couch🛋️ sofa🛋️ toilet🚽 bath🛁 bathtub🛁 shower🚿 soap🧼 sponge🧽 toothbrush🪥 broom🧹 basket🧺
+bucket🪣 candle🕯️ lightbulb💡 battery🔋 magnet🧲 window🪟 mirror🪞 ladder🪜 hammer🔨 wrench🔧 scissors✂️ ruler📏 pen🖊️
+paper📄 notebook📓 backpack🎒 bag👜 purse👛 money💰 treasure💰 coin🪙 dollar💵 gem💎 diamond💎 ring💍 camera📷 movie🎬
+ticket🎟️ headphones🎧 radio📻 microphone🎤 laptop💻 keyboard⌨️ magic🪄 wand🪄 flag🚩 lock🔒 calendar📅 alarm⏰
+hourglass⌛ globe🌎 compass🧭 lantern🏮 flashlight🔦 microscope🔬 brick🧱 idea💡
+`,
+  'Toys, games & sports': `
+ball⚽ soccer⚽ basketball🏀 football🏈 baseball⚾ game🎮 robot🤖 teddy🧸 toy🧸 trophy🏆 medal🏅 puzzle🧩 dice🎲 kite🪁
+yoyo🪀 doll🪆 pinata🪅 chess♟️ fishing🎣 boxing🥊 karate🥋 yoga🧘 bowling🎳 golf⛳ tennis🎾 hockey🏒 volleyball🏐 rugby🏉
+badminton🏸 skiing⛷️ frisbee🥏 goal🥅
+`,
+  'Parties & holidays': `
+gift🎁 present🎁 balloon🎈 party🎉 birthday🎂 confetti🎊 firework🎆 fireworks🎆 ribbon🎀 halloween🎃 pumpkin🎃 christmas🎄
+valentine💝
+`,
+  'Music': `
+music🎵 guitar🎸 drum🥁 piano🎹 violin🎻 trumpet🎺 saxophone🎷 sax🎷 banjo🪕 accordion🪗 flute🪈 maracas🪇 song🎵
+`,
+  'Clothes': `
+hat🎩 crown👑 sock🧦 shoe👟 shirt👕 dress👗 glasses👓 pants👖 jeans👖 shorts🩳 coat🧥 jacket🧥 scarf🧣 gloves🧤 mittens🧤
+boots👢 sandals👡 sneakers👟 cap🧢 swimsuit🩱 tie👔 sunglasses🕶️ ballet🩰
+`,
+  'People & pretend': `
+mom👩 mommy👩 mama👩 dad👨 daddy👨 papa👨 baby👶 boy👦 girl👧 grandma👵 grandpa👴 king🤴 prince🤴 queen👸 princess👸 ghost👻
+alien👽 monster👾 friend🧑‍🤝‍🧑 friends🧑‍🤝‍🧑 family👪 brother👦 sister👧 uncle👨 aunt👩 grandmother👵 grandfather👴
+granny👵 nana👵 man👨 woman👩 kid🧒 child🧒 children🧒 person🧑 teacher🧑‍🏫 doctor🧑‍⚕️ nurse🧑‍⚕️ dentist🦷
+firefighter🧑‍🚒 farmer🧑‍🌾 chef🧑‍🍳 cook🧑‍🍳 artist🧑‍🎨 pilot🧑‍✈️ scientist🧑‍🔬 officer👮 superhero🦸 hero🦸 villain🦹
+wizard🧙 witch🧙 fairy🧚 mermaid🧜 elf🧝 genie🧞 ninja🥷 pirate🏴‍☠️ clown🤡 santa🎅 troll🧌 angel😇 knight🛡️
+`,
+  'Body': `
+hand✋ foot🦶 feet🦶 eye👀 eyes👀 nose👃 ear👂 mouth👄 tooth🦷 teeth🦷 brain🧠 poop💩 arm💪 muscle💪 strong💪 leg🦵 finger☝️
+thumb👍 tongue👅 lips👄 bone🦴 footprint👣 clap👏
+`,
+  'Feelings & faces': `
+love❤️ heart❤️ happy😀 smile😊 sad😢 cry😭 mad😠 angry😠 silly🤪 funny😂 laugh😂 cool😎 wow😮 scared😱 sleep😴 sleepy😴
+tired😴 sick🤒 kiss😘 hug🤗 hi👋 hello👋 bye👋 yes👍 good👍 ok👌 excited🤩 surprised😮 shy😊 worried😟 nervous😬 grumpy😠
+yuck🤢 gross🤢 yawn🥱 sneeze🤧 cold🥶 hot🥵 dizzy😵 confused😕 crazy🤪 wink😉 giggle😆 grin😁 boo👻 shh🤫 quiet🤫 think🤔 hmm🤔
+celebrate🥳 hooray🎉 yay🎉 thanks🙏 please🙏 sorry😔 oops🙈 peekaboo🙈 proud😊 brave🦁
+`,
+  'Colors & shapes': `
+red🔴 blue🔵 green🟢 yellow🟡 purple🟣 black⚫ white⚪ brown🟤 pink🩷 gray🩶 grey🩶 circle⭕ triangle🔺 square🟥 gold🥇
+silver🥈
+`,
+  'Doing things': `
+run🏃 swim🏊 dance💃 sing🎤 eat🍽️ walk🚶 hike🥾 climb🧗 ski⛷️ skate⛸️ surf🏄 read📖 write✍️ draw🖍️ drink🥤 win🏆 hide🙈
+build🧱 wash🧼 brush🪥 running🏃 swimming🏊 dancing💃 singing🎤 reading📖 sleeping😴
+`,
+  'Numbers': `
+zero0️⃣ one1️⃣ two2️⃣ three3️⃣ four4️⃣ five5️⃣ six6️⃣ seven7️⃣ eight8️⃣ nine9️⃣ ten🔟 hundred💯
+`,
+};
+
 const EMOJI = {};
-for (const tok of EMOJI_LIST.trim().split(/\s+/)) {
-  const m = tok.match(/^([a-z]+)(.+)$/);
-  if (m) EMOJI[m[1]] = m[2];
+const WORD_TOPIC = {};
+for (const [topic, list] of Object.entries(TOPICS)) {
+  for (const tok of list.trim().split(/\s+/)) {
+    const m = tok.match(/^([a-z]+)(.+)$/);
+    if (m && !EMOJI[m[1]]) { EMOJI[m[1]] = m[2]; WORD_TOPIC[m[1]] = topic; }
+  }
+}
+// A word plus the singular forms it might come from: puppies → puppy, boxes → box, cats → cat
+function singulars(w) {
+  const out = [w];
+  if (w.length > 3 && w.endsWith('ies')) out.push(w.slice(0, -3) + 'y');
+  if (w.length > 3 && w.endsWith('es')) out.push(w.slice(0, -2));
+  if (w.length > 2 && w.endsWith('s')) out.push(w.slice(0, -1));
+  return out;
 }
 function lookupEmoji(word) {
-  const w = word.toLowerCase();
-  if (EMOJI[w]) return EMOJI[w];
-  if (w.length > 3 && w.endsWith('ies') && EMOJI[w.slice(0, -3) + 'y']) return EMOJI[w.slice(0, -3) + 'y'];
-  if (w.length > 3 && w.endsWith('es') && EMOJI[w.slice(0, -2)]) return EMOJI[w.slice(0, -2)];
-  if (w.length > 2 && w.endsWith('s') && EMOJI[w.slice(0, -1)]) return EMOJI[w.slice(0, -1)];
-  return null;
+  const hit = singulars(word.toLowerCase()).find(w => EMOJI[w]);
+  return hit ? EMOJI[hit] : null;
 }
 const withEmoji = list => list.trim().split(/\s+/).map(w => [w, EMOJI[w]]);
+// Words that are typed as one word but should be spoken as two
+const SAY_AS = { hotdog: 'hot dog', icecream: 'ice cream', trex: 't rex', tv: 'T V' };
 
 /* ================= Sound ================= */
 let muted = store.get('muted', false);
@@ -607,15 +807,32 @@ const sfx = {
 };
 
 /* ================= Speech ================= */
-let voice = null;
-function pickVoice() {
-  const en = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
-  voice = en.find(v => /Samantha|Google US English|Karen|Tessa|Moira/i.test(v.name))
-    || en.find(v => v.default) || en[0] || null;
+// Voices load in the background, so the picker refills whenever the browser announces them
+let voices = [];
+let defaultVoice = null;
+const NARRATOR_PITCH = 1.15;
+// New default voices: drop voice choices saved under the old defaults, once
+if (store.get('voiceDefaults', 1) < 2) {
+  ['voice', 'monsterVoice', 'monsterPitch'].forEach(k => store.set(k, undefined));
+  store.set('voiceDefaults', 2);
+}
+let narratorURI = store.get('voice', '') || '';
+let monsterURI = store.get('monsterVoice', '') || ''; // '' means same voice as the narrator
+let monsterPitch = store.get('monsterPitch', NARRATOR_PITCH) ?? NARRATOR_PITCH;
+let onVoicesLoaded = null;
+const findVoice = uri => voices.find(v => v.voiceURI === uri);
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  const en = voices.filter(v => /^en/i.test(v.lang));
+  // Google UK English Female only exists in Chrome; other browsers fall back down the list
+  defaultVoice = en.find(v => v.name === 'Google UK English Female')
+    || en.find(v => /Samantha|Google US English|Karen|Tessa|Moira/i.test(v.name))
+    || en.find(v => v.default) || en[0] || voices[0] || null;
+  if (onVoicesLoaded) onVoicesLoaded();
 }
 if ('speechSynthesis' in window) {
-  pickVoice();
-  speechSynthesis.onvoiceschanged = pickVoice;
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
 }
 // Speaks text; resolves when done (or after a timeout if the browser never says so)
 function say(text, opts = {}) {
@@ -623,10 +840,11 @@ function say(text, opts = {}) {
     if (!('speechSynthesis' in window) || (muted && !opts.force)) return resolve();
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
+    const voice = (opts.monster && findVoice(monsterURI)) || findVoice(narratorURI) || defaultVoice;
     if (voice) u.voice = voice;
     u.lang = voice ? voice.lang : 'en-US';
     u.rate = opts.rate ?? 0.9;
-    u.pitch = opts.pitch ?? 1.15;
+    u.pitch = opts.pitch ?? (opts.monster ? monsterPitch : NARRATOR_PITCH);
     let done = false;
     const finish = () => { if (!done) { done = true; resolve(); } };
     u.onend = finish;
@@ -858,7 +1076,7 @@ const Pad = (() => {
         v = before + ' ' + em + last;
         popAt = before.length + 1;
         sfx.magic();
-        if (!muted) say(w[1], { rate: 1 });
+        if (!muted) say(SAY_AS[w[1].toLowerCase()] || w[1], { rate: 1 });
       } else {
         sfx.key();
       }
@@ -1021,7 +1239,6 @@ const Monster = (() => {
     ['s', 'strawberry'], ['t', 'taco'], ['u', 'umbrella'], ['v', 'volcano'], ['w', 'watermelon'],
     ['x', 'box'], ['y', 'yam'], ['z', 'zebra'],
   ].map(([l, w]) => [l, w, EMOJI[w]]);
-  const SPOKEN = { hotdog: 'hot dog', icecream: 'ice cream' };
   const FOODS = {
     short: withEmoji('cake pie egg corn pear milk taco sock shoe hat key car bus bell book star moon ball fish rice'),
     long: withEmoji('cookie pizza apple donut candy grape lemon banana carrot cheese burger bread cherry popcorn rocket robot cupcake rainbow crown cloud'),
@@ -1075,11 +1292,11 @@ const Monster = (() => {
       target = l; word = w; em = e;
       bubble.innerHTML = `<div class="b-line">I'm hungry for the letter</div>
         <div class="b-word">${l}</div>
-        <div class="b-sub">${l === 'x' ? 'like the end of' : 'like'} ${em} ${SPOKEN[w] || w}</div>`;
+        <div class="b-sub">${l === 'x' ? 'like the end of' : 'like'} ${em} ${SAY_AS[w] || w}</div>`;
       // Say the letter only once; a sentence starting with "A is…" gets read as the word "a"
       speech = l === 'x'
         ? `I'm hungry for the letter X, like the end of box!`
-        : `I'm hungry for the letter ${LETTER_NAMES[l]}, like ${SPOKEN[w] || w}!`;
+        : `I'm hungry for the letter ${LETTER_NAMES[l]}, like ${SAY_AS[w] || w}!`;
     } else {
       [word, em] = item;
       target = word;
@@ -1099,13 +1316,13 @@ const Monster = (() => {
     svg.classList.remove('happy');
     renderBoxes(boxesEl, target, 0);
     setNextKey(target[0]);
-    if (mode === 'monster') say(speech, { pitch: 0.7 });
+    if (mode === 'monster') say(speech, { monster: true });
   }
   function enter() {
     paintLevels();
     paintMonster();
     if (!target) next();
-    else { setNextKey(target[pos]); say(speech, { pitch: 0.7 }); }
+    else { setNextKey(target[pos]); say(speech, { monster: true }); }
   }
   async function eat() {
     busy = true;
@@ -1129,13 +1346,13 @@ const Monster = (() => {
     confetti(x, y - 40, 24);
     const burp = fed % 5 === 0;
     $('#fedCount').textContent = `🍽️ ${fed} snack${fed === 1 ? '' : 's'}`;
-    await say(pick(YUM), { pitch: 0.7 });
+    await say(pick(YUM), { monster: true });
     if (burp) {
       sfx.burp();
       await wait(400);
       paintMonster(); // new color and a little bigger every 5 snacks
       bigCelebration();
-      await say('BURP! Excuse me! Look, I changed color!', { pitch: 0.6 });
+      await say('BURP! Excuse me! Look, I changed color!', { monster: true, pitch: Math.max(0.1, monsterPitch - 0.1) });
     }
     await wait(500);
     if (mode === 'monster') next();
@@ -1165,7 +1382,7 @@ const Monster = (() => {
       misses++;
       if (misses >= 2) {
         setNextKey(target[pos], true);
-        say(`Not that one! Find the letter ${LETTER_NAMES[target[pos]]}`, { pitch: 0.7 });
+        say(`Not that one! Find the letter ${LETTER_NAMES[target[pos]]}`, { monster: true });
       }
     }
   }
@@ -1178,8 +1395,8 @@ const Monster = (() => {
     paintLevels();
     next();
   }));
-  wrap.addEventListener('click', () => say(speech, { force: true, pitch: 0.7 }));
-  bubble.addEventListener('click', () => say(speech, { force: true, pitch: 0.7 }));
+  wrap.addEventListener('click', () => say(speech, { force: true, monster: true }));
+  bubble.addEventListener('click', () => say(speech, { force: true, monster: true }));
 
   paintMonster();
   return { enter, key };
@@ -1330,11 +1547,128 @@ const Bubbles = (() => {
   return { enter, stop, key };
 })();
 
+/* ================= Voice settings ================= */
+const VoiceSettings = (() => {
+  const dlg = $('#voiceDlg');
+  const nSel = $('#narratorSel');
+  const mSel = $('#monsterSel');
+  const pitch = $('#monsterPitch');
+  const label = v => (v.name.includes('(') ? v.name : `${v.name} (${v.lang})`);
+
+  function fill() {
+    const en = voices.filter(v => /^en/i.test(v.lang));
+    const list = (en.length ? en : voices).slice().sort((a, b) => label(a).localeCompare(label(b)));
+    nSel.replaceChildren(...list.map(v => new Option(label(v), v.voiceURI)));
+    mSel.replaceChildren(new Option('Same as above', ''), ...list.map(v => new Option(label(v), v.voiceURI)));
+    if (!list.length) nSel.replaceChildren(new Option('No voices found in this browser', ''));
+    nSel.value = findVoice(narratorURI) ? narratorURI : (defaultVoice ? defaultVoice.voiceURI : '');
+    mSel.value = findVoice(monsterURI) ? monsterURI : '';
+    pitch.value = monsterPitch;
+  }
+  function test(monster) {
+    say(monster ? "I'm hungry for the letter B, like banana! Nom nom nom!" : "Hi! Let's type the word cat. Great job!",
+      { force: true, monster });
+  }
+
+  nSel.addEventListener('change', () => { narratorURI = nSel.value; store.set('voice', narratorURI); test(false); });
+  mSel.addEventListener('change', () => { monsterURI = mSel.value; store.set('monsterVoice', monsterURI); test(true); });
+  pitch.addEventListener('input', () => { monsterPitch = +pitch.value; store.set('monsterPitch', monsterPitch); });
+  pitch.addEventListener('change', () => test(true));
+  $('#narratorTest').addEventListener('click', () => test(false));
+  $('#monsterTest').addEventListener('click', () => test(true));
+
+  $('#voiceBtn').addEventListener('click', () => {
+    fill();
+    Bubbles.stop(); // no new bubbles talking over the test voices
+    dlg.showModal();
+  });
+  dlg.addEventListener('close', () => {
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    if (mode === 'bubbles') Bubbles.enter();
+    if (mode === 'pad') Pad.focus();
+  });
+
+  return { fill };
+})();
+onVoicesLoaded = VoiceSettings.fill;
+
+/* ================= Magic words panel (Write tab) ================= */
+(() => {
+  const panel = $('#wordsPanel');
+  const list = $('#wordsList');
+  const search = $('#wordsSearch');
+  const btn = $('#wordsBtn');
+  const entries = Object.keys(EMOJI).sort().map(w => ({ text: w, emoji: EMOJI[w], topic: WORD_TOPIC[w] }));
+  const topicOrder = Object.keys(TOPICS);
+  let view = store.get('wordsTab', 'topic');
+
+  function addGroup(title, items, note) {
+    const h = document.createElement('div');
+    h.className = 'word-group';
+    h.textContent = title + ' ';
+    if (note) h.append(Object.assign(document.createElement('small'), { textContent: note }));
+    const grid = document.createElement('div');
+    grid.className = 'word-grid';
+    for (const en of items) {
+      const c = document.createElement('button');
+      c.className = 'word-chip';
+      c.textContent = `${en.emoji} ${en.text}`;
+      c.addEventListener('click', () => say(SAY_AS[en.text] || en.text, { force: true }));
+      grid.appendChild(c);
+    }
+    list.append(h, grid);
+  }
+  function render() {
+    const q = search.value.trim().toLowerCase();
+    const shown = q ? entries.filter(en => en.text.includes(q)) : entries;
+    list.replaceChildren();
+    if (view === 'az') {
+      for (const letter of [...new Set(shown.map(en => en.text[0]))]) {
+        addGroup(letter, shown.filter(en => en.text[0] === letter));
+      }
+    } else {
+      for (const topic of topicOrder) {
+        const items = shown.filter(en => en.topic === topic);
+        if (items.length) addGroup(topic, items, String(items.length));
+      }
+    }
+    if (!shown.length) {
+      list.append(Object.assign(document.createElement('div'), { className: 'word-empty', textContent: `No magic word like “${q}” yet` }));
+    }
+    $('#wordsCount').textContent = q
+      ? `${shown.length} found`
+      : `${entries.length} words · tap one to hear it`;
+    $$('#wordsView button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  }
+  function setOpen(open) {
+    panel.classList.toggle('open', open);
+    btn.classList.toggle('on', open);
+    store.set('wordsOpen', open);
+    if (open) render();
+  }
+
+  btn.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
+  $('#wordsClose').addEventListener('click', () => setOpen(false));
+  $$('#wordsView button').forEach(b => b.addEventListener('click', () => {
+    view = b.dataset.view;
+    store.set('wordsTab', view);
+    render();
+    list.scrollTop = 0;
+  }));
+  search.addEventListener('input', () => { render(); list.scrollTop = 0; });
+  search.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { search.value = ''; render(); Pad.focus(); }
+  });
+
+  setOpen(store.get('wordsOpen', false));
+})();
+
 /* ================= Global keyboard ================= */
 document.addEventListener('keydown', e => {
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.metaKey || e.ctrlKey || e.altKey || document.querySelector('dialog[open]')) return;
   if (mode === 'pad') {
-    if (document.activeElement !== Pad.input) Pad.focus();
+    const el = document.activeElement;
+    if (el !== Pad.input && !(el && el.closest && el.closest('.words-panel'))) Pad.focus();
     return;
   }
   if (/^[a-zA-Z]$/.test(e.key)) {
@@ -1347,8 +1681,9 @@ document.addEventListener('keydown', e => {
 // Buttons shouldn't keep focus; in Write mode, go straight back to typing
 document.addEventListener('click', e => {
   const b = e.target.closest('button');
-  if (b) b.blur();
-  if (mode === 'pad' && b && !b.classList.contains('tab')) Pad.focus();
+  if (!b || b.closest('dialog')) return;
+  b.blur();
+  if (mode === 'pad' && !b.classList.contains('tab')) Pad.focus();
 });
 
 paintToggles();
