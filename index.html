@@ -97,6 +97,11 @@
 
   /* ---------- Notepad ---------- */
   .pad-tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  /* Both labels sit in the same spot and only one shows, so the button keeps one width */
+  #readBtn { display: inline-grid; justify-items: center; }
+  #readBtn > span { grid-area: 1 / 1; }
+  #readBtn .lbl-stop, #readBtn.reading .lbl-read { visibility: hidden; }
+  #readBtn.reading .lbl-stop { visibility: visible; }
   .paper {
     position: relative;
     flex: 1;
@@ -106,39 +111,40 @@
     box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
     font-size: var(--pad-size);
     line-height: 1.5;
+    font-weight: 500;
+    overflow: hidden;
+  }
+  /* The notepad is a real text box (#padInput) with see-through text, laid exactly on top of #padDisplay,
+     which draws the same text with colors and emoji. Both must lay out text identically. */
+  #padDisplay, #padInput {
+    position: absolute; inset: 0;
+    margin: 0; border: 0;
     padding: .25em .6em;
+    font: inherit; line-height: inherit; letter-spacing: normal;
+    white-space: pre-wrap; overflow-wrap: break-word; word-break: normal;
     overflow-y: auto;
-    cursor: text;
+    scrollbar-width: none;
+  }
+  #padDisplay::-webkit-scrollbar, #padInput::-webkit-scrollbar { display: none; }
+  #padDisplay {
+    overflow: hidden; /* scrolled from code to follow the text box */
+    pointer-events: none;
     background-image: repeating-linear-gradient(to bottom,
       transparent 0, transparent calc(1.5em - 3px), #e6e9ff calc(1.5em - 3px), #e6e9ff 1.5em);
     background-attachment: local;
     background-position: 0 .25em;
   }
-  #padDisplay {
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-weight: 500;
-    min-height: 1.5em;
-    padding-bottom: 1.5em; /* room to scroll a half-hidden last line fully into view */
+  #padDisplay .hit { -webkit-text-stroke: .025em currentColor; } /* looks bolder without making letters wider */
+  #padInput {
+    z-index: 1;
+    resize: none; outline: none;
+    background: transparent;
+    color: transparent; -webkit-text-fill-color: transparent;
+    caret-color: var(--accent);
+    cursor: text;
+    user-select: text; -webkit-user-select: text;
   }
-  #padDisplay .hit { font-weight: 700; }
-  #padDisplay .emo { display: inline-block; }
-  #padDisplay .emo.pop { animation: emoPop .7s cubic-bezier(.2, 1.6, .4, 1); }
-  @keyframes emoPop {
-    0% { transform: scale(0) rotate(-40deg); }
-    60% { transform: scale(1.5) rotate(10deg); }
-    100% { transform: scale(1) rotate(0); }
-  }
-  .caret {
-    display: inline-block;
-    width: .08em; height: 1em;
-    margin-left: 2px;
-    vertical-align: -0.15em;
-    background: var(--accent);
-    border-radius: 4px;
-    animation: caretBlink 1s steps(1) infinite;
-  }
-  @keyframes caretBlink { 50% { opacity: 0; } }
+  #padInput::selection { background: rgba(108, 92, 231, .28); color: transparent; -webkit-text-fill-color: transparent; }
   .pad-hint {
     position: absolute;
     left: 0; right: 0; top: 50%;
@@ -155,18 +161,15 @@
     font-family: inherit; background: #f1eeff; border-radius: 8px;
     padding: 2px 10px; box-shadow: 0 3px 0 #dcd6f5;
   }
-  .hidden-input {
-    position: absolute; top: 0; left: 0;
-    width: 1px; height: 1px;
-    opacity: 0; border: 0; padding: 0;
-    font-size: 16px; /* stops iOS zooming */
-    resize: none;
-  }
 
   /* ---------- Shared game bits ---------- */
-  .game-top {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; flex-wrap: wrap;
+  /* Controls in the middle, score on the right */
+  .game-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+  .game-top > :first-child { grid-column: 2; }
+  .game-top > .score { grid-column: 3; justify-self: end; }
+  @media (max-width: 760px) {
+    .game-top { display: flex; flex-wrap: wrap; justify-content: center; }
+    .game-top > .score { margin-left: auto; }
   }
   .seg { display: flex; background: #fff; border-radius: 999px; padding: 5px; box-shadow: 0 4px 0 #e2dcf5; }
   .seg button {
@@ -180,9 +183,6 @@
     box-shadow: 0 4px 0 #e2dcf5;
     display: flex; align-items: center; gap: 10px;
   }
-  .slots { display: flex; gap: 2px; font-size: 22px; }
-  .slots span { filter: grayscale(1) opacity(.3); transition: filter .3s, transform .3s; }
-  .slots span.on { filter: none; transform: scale(1.15); }
 
   .boxes { display: flex; justify-content: center; gap: .12em; font-size: clamp(48px, min(9vw, 11vh), 112px); font-weight: 700; flex-wrap: wrap; }
   .box {
@@ -323,6 +323,22 @@
   .bub.away { transition: opacity .5s; opacity: 0; }
   @keyframes bubIn { from { scale: 0; } }
   @keyframes bubPop { 60% { scale: 1.5; opacity: .8; } 100% { scale: 1.9; opacity: 0; } }
+  .mini-bub {
+    position: absolute;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 28%, rgba(255, 255, 255, .95) 0 14%, rgba(255, 255, 255, .25) 15% 35%, transparent 36%),
+      radial-gradient(circle, hsla(var(--h), 90%, 80%, .25) 50%, hsla(var(--h), 90%, 60%, .75) 100%);
+    border: 2px solid hsla(var(--h), 90%, 55%, .8);
+  }
+  .bub.oops { animation: bubOops .4s; }
+  @keyframes bubOops { 25% { rotate: -10deg; } 75% { rotate: 10deg; } }
+  /* Word bubbles: a picture over the word; typed letters turn green */
+  .bub.wordy { font-size: calc(var(--s) * var(--f)); }
+  .bub .bw { display: flex; flex-direction: column; align-items: center; line-height: 1.05; white-space: nowrap; }
+  .bub .bw-emoji { font-size: calc(var(--s) * .28); }
+  .bub .bw-done { color: #00a86b; }
+  .seg-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
   .bub-start {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
@@ -352,7 +368,8 @@
   .field input[type=range] { flex: 1; accent-color: var(--accent-2); }
   .field .row .end { font-size: 16px; color: var(--ink-soft); white-space: nowrap; }
   .tip { font-size: 16px; line-height: 1.45; color: var(--ink-soft); background: #f6f3ff; border-radius: 14px; padding: 10px 14px; margin: 0 0 18px; }
-  .dlg-actions { display: flex; justify-content: flex-end; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+  .dlg-text { margin: 0 0 22px; font-size: 20px; color: var(--ink-soft); }
 
   /* ---------- Magic words panel (Write tab) ---------- */
   .pad-body { flex: 1; min-height: 0; display: flex; gap: 14px; position: relative; }
@@ -360,7 +377,7 @@
   .words-panel {
     display: none;
     flex-direction: column;
-    width: 340px; flex: none;
+    width: 510px; flex: none;
     background: var(--card);
     border-radius: 28px;
     box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
@@ -388,8 +405,8 @@
   .word-chip {
     border: 0; background: #f6f3ff;
     border-radius: 999px;
-    padding: 4px 12px 4px 8px;
-    font-size: 17px; font-weight: 600;
+    padding: 6px 16px 6px 12px;
+    font-size: 26px; font-weight: 600;
     display: inline-flex; align-items: center; gap: 5px;
     box-shadow: 0 3px 0 #e2dcf5;
   }
@@ -397,7 +414,7 @@
   .word-empty { padding: 30px 10px; text-align: center; font-size: 18px; color: var(--ink-soft); }
   /* Narrow screens: the panel slides over the right side of the notepad */
   @media (max-width: 760px) {
-    .words-panel { position: absolute; top: 0; right: 0; bottom: 0; z-index: 5; width: min(340px, 88%); box-shadow: 0 20px 50px rgba(45, 42, 74, .3); }
+    .words-panel { position: absolute; top: 0; right: 0; bottom: 0; z-index: 5; width: min(510px, 92%); box-shadow: 0 20px 50px rgba(45, 42, 74, .3); }
   }
 
   /* ---------- On-screen keyboard ---------- */
@@ -450,17 +467,21 @@
     @page { margin: 16mm; }
     html, body { height: auto; overflow: visible; background: #fff; }
     body { display: block; }
-    .topbar, .pad-tools, .words-panel, .keyboard, #fx, dialog, .pad-hint, .caret, .hidden-input,
+    .topbar, .pad-tools, .words-panel, .keyboard, #fx, dialog, .pad-hint, #padInput,
     .screen:not(#pad) { display: none !important; }
     main { padding: 0; }
     #pad { display: block !important; }
     .paper {
       font-size: min(var(--pad-size), 44px);
-      padding: 0;
-      background-position: 0 0;
       overflow: visible;
       border-radius: 0;
       box-shadow: none;
+    }
+    #padDisplay {
+      position: static;
+      overflow: visible;
+      padding: 0;
+      background-position: 0 0;
       print-color-adjust: exact; -webkit-print-color-adjust: exact; /* keep the lines and colored words */
     }
     .print-foot { display: block; margin-top: 24px; font-size: 14px; color: var(--ink-soft); text-align: right; }
@@ -490,7 +511,7 @@
     <div class="pad-tools">
       <button class="chunky" id="smallerBtn" aria-label="Smaller letters">🔍 A−</button>
       <button class="chunky" id="biggerBtn" aria-label="Bigger letters">🔍 A+</button>
-      <button class="chunky primary" id="readBtn">🔊 Read it</button>
+      <button class="chunky" id="readBtn"><span class="lbl-read">🔊 Read it</span><span class="lbl-stop">⏹ Stop</span></button>
       <button class="chunky" id="printBtn">🖨️ Print</button>
       <button class="chunky" id="clearBtn">✨ New page</button>
       <button class="chunky" id="wordsBtn">📖 Magic words</button>
@@ -499,7 +520,7 @@
       <div class="paper" id="paper">
         <div id="padDisplay"></div>
         <div class="pad-hint" id="padHint">Type a word like <b>cat</b>, <b>pizza</b> or <b>rocket</b><br>then press <kbd>space</kbd> ✨</div>
-        <textarea class="hidden-input" id="padInput" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Notepad"></textarea>
+        <textarea id="padInput" maxlength="3000" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Notepad"></textarea>
       </div>
       <aside class="words-panel" id="wordsPanel" aria-label="Magic words">
         <div class="wp-head">
@@ -528,7 +549,7 @@
         <button data-level="medium">🐥 Medium</button>
         <button data-level="hard">🦅 Hard</button>
       </div>
-      <div class="score"><span class="slots" id="ccSlots"></span><span id="ccStars">⭐ 0</span></div>
+      <div class="score" id="ccStars">0 words</div>
     </div>
     <div class="cc-card" id="ccCard">
       <div class="cc-emoji" id="ccEmoji" title="Hear the word">🐱</div>
@@ -593,10 +614,17 @@
   <!-- Bubble Pop: press the letter to pop its bubble -->
   <section class="screen" id="bubbles">
     <div class="game-top">
-      <div class="seg" id="bLevels">
-        <button data-level="slow">🐢 Slow</button>
-        <button data-level="medium">🐇 Medium</button>
-        <button data-level="fast">🚀 Fast</button>
+      <div class="seg-row">
+        <div class="seg" id="bWords">
+          <button data-words="abc">🔤 ABC</button>
+          <button data-words="short">🍪 Short</button>
+          <button data-words="long">🍕 Long</button>
+        </div>
+        <div class="seg" id="bLevels">
+          <button data-level="slow">🐢 Slow</button>
+          <button data-level="medium">🐇 Medium</button>
+          <button data-level="fast">🚀 Fast</button>
+        </div>
       </div>
       <div class="score" id="bScore">🫧 0 popped</div>
     </div>
@@ -635,6 +663,17 @@
     </div>
     <p class="tip">Want nicer voices? On a Mac, open System Settings → Accessibility → Spoken Content → System Voice → Manage Voices, download an English voice marked Premium or Enhanced, then restart the browser.</p>
     <div class="dlg-actions"><button class="chunky" value="done">Done</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="clearDlg">
+  <form method="dialog">
+    <h2>✨ Start a new page?</h2>
+    <p class="dlg-text">Everything on this page will be cleared.</p>
+    <div class="dlg-actions">
+      <button class="chunky" value="keep">Keep writing</button>
+      <button class="chunky warn" value="clear">🗑 New page</button>
+    </div>
   </form>
 </dialog>
 
@@ -1033,7 +1072,6 @@ function wobbleBox(el, i) {
 const Pad = (() => {
   const input = $('#padInput');
   const display = $('#padDisplay');
-  const paper = $('#paper');
   const hint = $('#padHint');
   const SIZES = [36, 48, 64, 84, 108];
   let sizeIdx = store.get('padSize', 2);
@@ -1072,9 +1110,10 @@ const Pad = (() => {
         }
       }
     }
-    display.innerHTML = html + '<span class="caret"></span>';
+    // The trailing space keeps an empty last line (after Enter) the same height as in the text box
+    display.innerHTML = html + ' ';
     hint.style.display = v ? 'none' : '';
-    keepCaretVisible();
+    display.scrollTop = input.scrollTop;
     const popped = display.querySelector('.emo.pop');
     if (popped) {
       const [x, y] = centerOf(popped);
@@ -1084,57 +1123,47 @@ const Pad = (() => {
     popAt = -1;
   }
 
-  // When the cursor's line goes below the bottom of the notepad, scroll up just enough to show the whole line
-  function keepCaretVisible() {
-    const caret = display.querySelector('.caret');
-    const lineH = parseFloat(getComputedStyle(paper).fontSize) * 1.5;
-    const line = Math.floor((caret.offsetTop - display.offsetTop) / lineH);
-    const bottom = display.offsetTop + (line + 1) * lineH;
-    if (bottom > paper.scrollTop + paper.clientHeight) paper.scrollTop = bottom - paper.clientHeight;
+  // Inserts text at the cursor. execCommand keeps the browser's undo (Cmd+Z) working.
+  function insertAtCursor(text) {
+    if (!document.execCommand('insertText', false, text)) {
+      input.setRangeText(text, input.selectionStart, input.selectionEnd, 'end');
+    }
   }
 
-  function caretToEnd() {
-    const n = input.value.length;
-    input.setSelectionRange(n, n);
-  }
-
+  let addingEmoji = false;
   input.addEventListener('input', e => {
-    let v = input.value.slice(0, 3000);
-    const last = v.slice(-1);
-    const inserted = !e.inputType || e.inputType.startsWith('insert');
-    if (inserted && /[\s.,!?]/.test(last)) {
-      // A word just ended: if it's a magic word, add its emoji right after it
-      const before = v.slice(0, -1);
-      const w = before.match(/([A-Za-z]+)$/);
+    if (addingEmoji) return;
+    const v = input.value;
+    const pos = input.selectionStart;
+    const typed = e.inputType === 'insertText' || e.inputType === 'insertLineBreak';
+    if (typed && pos === input.selectionEnd && /[\s.,!?]/.test(v[pos - 1])) {
+      // A word just ended: if it's a magic word, add its emoji right after it,
+      // unless that emoji is already there (like adding a space between "cat" and "🐱")
+      const w = v.slice(0, pos - 1).match(/([A-Za-z]+)$/);
       const em = w && lookupEmoji(w[1]);
-      if (em) {
-        v = before + ' ' + em + last;
-        popAt = before.length + 1;
+      if (em && !v.slice(pos).trimStart().startsWith(em)) {
+        addingEmoji = true;
+        input.setSelectionRange(pos - 1, pos - 1);
+        insertAtCursor(' ' + em);
+        addingEmoji = false;
+        const after = pos + 1 + em.length; // just past the space or punctuation that was typed
+        input.setSelectionRange(after, after);
+        popAt = pos;
         sfx.magic();
         if (!muted) say(SAY_AS[w[1].toLowerCase()] || w[1], { rate: 1 });
       } else {
         sfx.key();
       }
-    } else if (inserted) {
+    } else if (typed) {
       sfx.key();
     }
-    input.value = v;
-    store.set('padText', v);
+    store.set('padText', input.value);
     render();
   });
-  input.addEventListener('keydown', e => {
-    // Keep the cursor at the end, so kids can't get lost in the text
-    if (/^(Arrow|Home|End|Page)/.test(e.key)) e.preventDefault();
-    if ((e.metaKey || e.ctrlKey) && /^[az]$/i.test(e.key)) e.preventDefault();
-  });
-  document.addEventListener('selectionchange', () => {
-    if (document.activeElement === input) caretToEnd();
-  });
-  paper.addEventListener('pointerdown', e => { e.preventDefault(); focus(); });
+  input.addEventListener('scroll', () => { display.scrollTop = input.scrollTop; });
 
   function focus() {
     input.focus({ preventScroll: true });
-    caretToEnd();
   }
 
   $('#smallerBtn').addEventListener('click', () => { sizeIdx = Math.max(0, sizeIdx - 1); applySize(); render(); });
@@ -1147,44 +1176,59 @@ const Pad = (() => {
   window.addEventListener('beforeprint', () => {
     $('#printFoot').textContent = `Made with Funpad ✨ · ${new Date().toLocaleDateString(undefined, { dateStyle: 'long' })}`;
   });
-  $('#readBtn').addEventListener('click', () => {
-    const text = input.value.replace(/\p{Extended_Pictographic}|️|‍/gu, ' ').trim();
-    say(text || 'Type something first, and I will read it to you!', { force: true, rate: 0.85 });
-  });
-
-  // "New page" needs two taps so it can't wipe the page by accident
-  const clearBtn = $('#clearBtn');
-  let clearTimer = null;
-  clearBtn.addEventListener('click', () => {
-    if (!clearTimer) {
-      clearBtn.textContent = '🗑 Tap again!';
-      clearBtn.classList.add('warn');
-      clearTimer = setTimeout(resetClear, 2500);
+  // "Read it" becomes "Stop" while the page is being read aloud
+  const readBtn = $('#readBtn');
+  let reading = 0; // which read-aloud is running (0 = none), so an old one can't reset a newer one
+  function doneReading() {
+    reading = 0;
+    readBtn.classList.remove('reading');
+  }
+  readBtn.addEventListener('click', async () => {
+    if (reading) {
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      doneReading();
       return;
     }
-    resetClear();
-    input.value = '';
-    store.set('padText', '');
-    render();
+    const id = reading = Date.now();
+    readBtn.classList.add('reading');
+    const text = input.value.replace(/\p{Extended_Pictographic}|️|‍/gu, ' ').trim();
+    await say(text || 'Type something first, and I will read it to you!', { force: true, rate: 0.85 });
+    // say() can give up waiting on long pages, so also wait until the voice has really finished
+    while (reading === id && 'speechSynthesis' in window && speechSynthesis.speaking) await wait(250);
+    if (reading === id) doneReading();
   });
-  function resetClear() {
-    clearTimeout(clearTimer);
-    clearTimer = null;
-    clearBtn.textContent = '✨ New page';
-    clearBtn.classList.remove('warn');
-  }
+
+  // "New page" asks first, so the page can't be wiped by accident
+  const clearDlg = $('#clearDlg');
+  $('#clearBtn').addEventListener('click', () => {
+    if (!input.value) return;
+    clearDlg.returnValue = ''; // so closing with Esc doesn't reuse last time's answer
+    clearDlg.showModal();
+  });
+  clearDlg.addEventListener('close', () => {
+    if (clearDlg.returnValue === 'clear') {
+      input.value = '';
+      store.set('padText', '');
+      render();
+    }
+    focus();
+  });
 
   applySize();
+  input.setSelectionRange(input.value.length, input.value.length); // start at the end of saved writing
   return { render, focus, input };
 })();
 
+/* ================= Picture words (Copy-Cat and Bubbles) ================= */
+const PICTURE_WORDS = {
+  easy: withEmoji('cat dog pig cow bee ant owl fox bat bus car sun egg pie hat bed box key map bug hen toy'),
+  medium: withEmoji('frog fish bear duck lion goat crab bird cake milk corn pear boat ship ball star moon tree rain snow book bell drum sock shoe gift fire king baby home rose leaf taco'),
+  hard: withEmoji('apple horse mouse sheep snake tiger zebra whale shark panda koala bunny puppy snail pizza bread grape lemon candy donut cookie banana cherry carrot robot rocket train truck heart house flower cloud rainbow dragon monkey turtle rabbit penguin unicorn octopus'),
+};
+
 /* ================= Copy-Cat ================= */
 const CopyCat = (() => {
-  const WORDS = {
-    easy: withEmoji('cat dog pig cow bee ant owl fox bat bus car sun egg pie hat bed box key map bug hen toy'),
-    medium: withEmoji('frog fish bear duck lion goat crab bird cake milk corn pear boat ship ball star moon tree rain snow book bell drum sock shoe gift fire king baby home rose leaf taco'),
-    hard: withEmoji('apple horse mouse sheep snake tiger zebra whale shark panda koala bunny puppy snail pizza bread grape lemon candy donut cookie banana cherry carrot robot rocket train truck heart house flower cloud rainbow dragon monkey turtle rabbit penguin unicorn octopus'),
-  };
+  const WORDS = PICTURE_WORDS;
   const bags = {};
   Object.keys(WORDS).forEach(k => { bags[k] = makeBag(WORDS[k]); });
   const emojiEl = $('#ccEmoji');
@@ -1196,10 +1240,8 @@ const CopyCat = (() => {
   function paintLevels() {
     $$('#ccLevels button').forEach(b => b.classList.toggle('active', b.dataset.level === level));
   }
-  function paintStars(full = false) {
-    $('#ccStars').textContent = '⭐ ' + stars;
-    const filled = full ? 5 : stars % 5;
-    $('#ccSlots').innerHTML = [0, 1, 2, 3, 4].map(i => `<span class="${i < filled ? 'on' : ''}">⭐</span>`).join('');
+  function paintStars() {
+    $('#ccStars').textContent = `${stars} word${stars === 1 ? '' : 's'}`;
   }
   function next() {
     [word, emoji] = bags[level]();
@@ -1221,7 +1263,7 @@ const CopyCat = (() => {
     stars++;
     store.set('stars', stars);
     const fiveStars = stars % 5 === 0;
-    paintStars(fiveStars);
+    paintStars();
     setNextKey(null);
     sfx.win();
     emojiEl.classList.add('cheer');
@@ -1447,69 +1489,109 @@ const Monster = (() => {
 
 /* ================= Bubble Pop ================= */
 const Bubbles = (() => {
-  // max: bubbles on screen at once; rise: seconds to float to the top; gap: ms between new bubbles
+  // max: letter bubbles on screen at once (words are always one at a time);
+  // rise: seconds to float to the top; gap: ms between new bubbles
   const LEVELS = {
     slow: { max: 1, rise: 16, gap: 600 },
-    medium: { max: 2, rise: 13, gap: 2500 },
-    fast: { max: 3, rise: 10, gap: 1800 },
+    medium: { max: 2, rise: 10, gap: 2000 },
+    fast: { max: 3, rise: 7, gap: 1400 },
   };
   const area = $('#bubArea');
   const startMsg = $('#bubStart');
-  const nextLetter = makeBag([...'abcdefghijklmnopqrstuvwxyz']);
+  // Each item is [text, emoji]; ABC bubbles are single letters with no picture
+  const bags = {
+    abc: makeBag([...'abcdefghijklmnopqrstuvwxyz'].map(c => [c, ''])),
+    short: makeBag([...PICTURE_WORDS.easy, ...PICTURE_WORDS.medium]),
+    long: makeBag(PICTURE_WORDS.hard),
+  };
   let level = store.get('bLevel', 'slow');
+  let words = store.get('bWords', 'abc');
   let popped = store.get('popped', 0);
   let bubbles = [];
-  let raf = 0, last = 0, sinceSpawn = 0, misses = 0, target = null;
-  // Bubble speech takes turns, so a new letter never cuts off the one before it
+  let raf = 0, last = 0, sinceSpawn = 0, misses = 0;
+  let target = null; // the bubble to type next (glows)
+  let active = null; // a word bubble that's partly typed
+  // Bubble speech takes turns, so a new bubble never cuts off the one before it
   let speechQueue = Promise.resolve();
   function announce(text, bubble) {
     speechQueue = speechQueue.then(() =>
       mode === 'bubbles' && (!bubble || bubbles.includes(bubble)) ? say(text, { rate: 1.1 }) : null);
   }
+  const highest = list => list.reduce((a, b) => (!a || b.p > a.p ? b : a), null);
 
   function paintLevels() {
     $$('#bLevels button').forEach(b => b.classList.toggle('active', b.dataset.level === level));
+    $$('#bWords button').forEach(b => b.classList.toggle('active', b.dataset.words === words));
+    startMsg.textContent = words === 'abc'
+      ? 'Press the letter on a bubble to pop it! 🫧'
+      : 'Type the word on a bubble to pop it! 🫧';
   }
   function paintScore() {
     $('#bScore').textContent = `🫧 ${popped} popped`;
   }
+  function paintBubble(b) {
+    if (b.text.length === 1) { b.el.textContent = b.text; return; }
+    const done = Object.assign(document.createElement('span'), { className: 'bw-done', textContent: b.text.slice(0, b.typed) });
+    const word = document.createElement('span');
+    word.append(done, b.text.slice(b.typed));
+    const wrap = Object.assign(document.createElement('span'), { className: 'bw' });
+    wrap.append(Object.assign(document.createElement('span'), { className: 'bw-emoji', textContent: b.emoji }), word);
+    b.el.replaceChildren(wrap);
+  }
   function spawn() {
-    let ch = nextLetter();
-    for (let i = 0; i < 5 && bubbles.some(b => b.ch === ch); i++) ch = nextLetter();
-    if (bubbles.some(b => b.ch === ch)) return;
-    const size = Math.round(Math.min(150, Math.max(90, area.clientHeight * 0.22)) * (0.9 + Math.random() * 0.2));
+    // No two bubbles start with the same letter, so the first key picks one bubble
+    const starts = new Set(bubbles.map(o => o.text[0]));
+    let item = bags[words]();
+    for (let i = 0; i < 5 && starts.has(item[0][0]); i++) item = bags[words]();
+    if (starts.has(item[0][0])) return;
+    const [text, emoji] = item;
+    const wordy = text.length > 1;
+    const base = Math.min(150, Math.max(90, area.clientHeight * 0.22)) * (0.9 + Math.random() * 0.2);
+    const size = Math.round(wordy ? Math.min(base * 1.4, area.clientHeight * 0.45) : base);
     const el = document.createElement('div');
-    el.className = 'bub';
-    el.textContent = ch;
+    el.className = 'bub' + (wordy ? ' wordy' : '');
     el.style.setProperty('--s', size + 'px');
-    el.style.setProperty('--h', Math.floor(Math.random() * 360));
+    const hue = Math.floor(Math.random() * 360);
+    el.style.setProperty('--h', hue);
+    el.style.setProperty('--f', Math.min(0.4, 1.5 / text.length)); // longer words get smaller letters
     area.appendChild(el);
-    const x = Math.random() * Math.max(0, area.clientWidth - size - 40) + 20;
-    const b = { el, ch, size, x, p: 0, phase: Math.random() * 6 };
+    // Start away from the other bubbles, so words don't cover each other
+    const room = Math.max(0, area.clientWidth - size - 40);
+    const gapTo = x => Math.min(Infinity, ...bubbles.map(o => Math.abs(o.x + o.size / 2 - (x + size / 2))));
+    let x = Math.random() * room + 20;
+    for (let i = 0; i < 8; i++) {
+      const tryX = Math.random() * room + 20;
+      if (gapTo(tryX) > gapTo(x)) x = tryX;
+    }
+    const b = { el, text, emoji, hue, typed: 0, size, x, p: 0, phase: Math.random() * 6 };
+    paintBubble(b);
     bubbles.push(b);
     sinceSpawn = 0;
-    announce(ch, b);
+    announce(SAY_AS[text] || text, b);
     startMsg.style.display = 'none';
   }
   function remove(b) {
     bubbles = bubbles.filter(o => o !== b);
+    if (b === active) active = null;
+    if (b === target) target = null;
   }
-  // The bubble closest to the top is the one to pop next
+  // The word being typed comes first; otherwise the bubble closest to the top
   function updateTarget() {
-    const top = bubbles.reduce((a, b) => (!a || b.p > a.p ? b : a), null);
-    if (top === target) return;
+    const next = active || highest(bubbles);
+    if (next === target) return;
     if (target) target.el.classList.remove('target');
-    target = top;
+    target = next;
     misses = 0;
     if (target && hints) target.el.classList.add('target');
-    setNextKey(target ? target.ch : null);
+    setNextKey(target ? target.text[target.typed] : null);
   }
   function tick(t) {
     const dt = Math.min(0.05, (t - last) / 1000);
     last = t;
     const L = LEVELS[level];
     sinceSpawn += dt * 1000;
-    if (bubbles.length < L.max && (sinceSpawn > L.gap || !bubbles.length)) spawn();
+    const max = words === 'abc' ? L.max : 1;
+    if (bubbles.length < max && (sinceSpawn > L.gap || !bubbles.length)) spawn();
     const H = area.clientHeight, W = area.clientWidth;
     for (const b of [...bubbles]) {
       b.p += dt / L.rise;
@@ -1541,29 +1623,17 @@ const Bubbles = (() => {
   function clear() {
     bubbles.forEach(b => b.el.remove());
     bubbles = [];
-    target = null;
+    target = active = null;
     sinceSpawn = 0;
+    startMsg.style.display = '';
   }
-  function key(ch) {
-    const b = bubbles.find(o => o.ch === ch);
-    if (!b) {
-      sfx.oops();
-      misses++;
-      if (target && misses >= 2) {
-        setNextKey(target.ch, true);
-        target.el.classList.add('target');
-        say(`Find the letter ${LETTER_NAMES[target.ch]}`);
-        misses = 0;
-      }
-      return;
-    }
+  function pop(b) {
     remove(b);
-    if (b === target) target = null;
-    b.el.classList.remove('target');
+    b.el.classList.remove('target', 'oops');
     b.el.classList.add('popping');
     setTimeout(() => b.el.remove(), 300);
     const [x, y] = centerOf(b.el);
-    confetti(x, y, 16, 0.6);
+    bubbleBurst(x, y, b.hue, b.text.length > 1 ? 22 : 14, b.size * 0.9);
     sfx.pop();
     popped++;
     store.set('popped', popped);
@@ -1576,6 +1646,53 @@ const Bubbles = (() => {
       announce(`${popped} bubbles! You're a bubble popping champion!`);
     }
   }
+  // Little bubbles fly out from a popped bubble, in colors close to its own, then drift up and fade
+  function bubbleBurst(x, y, hue, n, radius) {
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement('div');
+      d.className = 'mini-bub';
+      const size = 10 + Math.random() * 22;
+      d.style.cssText = `left:${x}px; top:${y}px; width:${size}px; height:${size}px; --h:${(hue + Math.random() * 60 + 330) % 360}`;
+      fx.appendChild(d);
+      const ang = Math.random() * Math.PI * 2;
+      const dist = radius * (0.5 + Math.random() * 0.9);
+      const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist;
+      d.animate([
+        { transform: 'translate(-50%, -50%) scale(.3)', opacity: 1 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1)`, opacity: 1, offset: 0.6 },
+        { transform: `translate(calc(-50% + ${dx * 1.15}px), calc(-50% + ${dy * 1.15 - 30}px)) scale(1.3)`, opacity: 0 },
+      ], { duration: 700 + Math.random() * 400, easing: 'cubic-bezier(.2, .8, .3, 1)' }).onfinish = () => d.remove();
+    }
+  }
+  function key(ch) {
+    // Keep typing the word in progress, or start on the bubble whose word begins with this letter
+    const b = active || highest(bubbles.filter(o => o.text[0] === ch));
+    if (b && b.text[b.typed] === ch) {
+      b.typed++;
+      misses = 0;
+      if (b.typed === b.text.length) { pop(b); return; }
+      active = b;
+      sfx.good(b.typed - 1);
+      paintBubble(b);
+      updateTarget();
+      setNextKey(b.text[b.typed]);
+      return;
+    }
+    sfx.oops();
+    if (active) {
+      active.el.classList.remove('oops');
+      void active.el.offsetWidth;
+      active.el.classList.add('oops');
+    }
+    misses++;
+    if (target && misses >= 2) {
+      const need = target.text[target.typed];
+      setNextKey(need, true);
+      target.el.classList.add('target');
+      say(`Find the letter ${LETTER_NAMES[need]}`);
+      misses = 0;
+    }
+  }
 
   $$('#bLevels button').forEach(b => b.addEventListener('click', () => {
     level = b.dataset.level;
@@ -1583,6 +1700,13 @@ const Bubbles = (() => {
     paintLevels();
     clear();
   }));
+  $$('#bWords button').forEach(b => b.addEventListener('click', () => {
+    words = b.dataset.words;
+    store.set('bWords', words);
+    paintLevels();
+    clear();
+  }));
+  area.addEventListener('animationend', e => { if (e.animationName === 'bubOops') e.target.classList.remove('oops'); });
   hintBtn.addEventListener('click', () => {
     if (target) target.el.classList.toggle('target', hints);
   });
