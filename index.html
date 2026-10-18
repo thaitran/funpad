@@ -119,6 +119,7 @@
     word-break: break-word;
     font-weight: 500;
     min-height: 1.5em;
+    padding-bottom: 1.5em; /* room to scroll a half-hidden last line fully into view */
   }
   #padDisplay .hit { font-weight: 700; }
   #padDisplay .emo { display: inline-block; }
@@ -435,11 +436,34 @@
     .seg button { padding: 6px 10px; font-size: 16px; }
     .score { font-size: 18px; padding: 6px 12px; }
     .stage { padding: 12px; }
+    .pad-tools .chunky { padding: 8px 14px; font-size: 18px; }
   }
   /* Phones: stack each tab's icon over its label so all four fit */
   @media (max-width: 520px) {
     .tabs { gap: 6px; }
     .tab { flex-direction: column; gap: 0; padding: 4px 10px; font-size: 13px; border-radius: 16px; }
+  }
+
+  /* ---------- Printing: just the page of writing ---------- */
+  .print-foot { display: none; }
+  @media print {
+    @page { margin: 16mm; }
+    html, body { height: auto; overflow: visible; background: #fff; }
+    body { display: block; }
+    .topbar, .pad-tools, .words-panel, .keyboard, #fx, dialog, .pad-hint, .caret, .hidden-input,
+    .screen:not(#pad) { display: none !important; }
+    main { padding: 0; }
+    #pad { display: block !important; }
+    .paper {
+      font-size: min(var(--pad-size), 44px);
+      padding: 0;
+      background-position: 0 0;
+      overflow: visible;
+      border-radius: 0;
+      box-shadow: none;
+      print-color-adjust: exact; -webkit-print-color-adjust: exact; /* keep the lines and colored words */
+    }
+    .print-foot { display: block; margin-top: 24px; font-size: 14px; color: var(--ink-soft); text-align: right; }
   }
 </style>
 </head>
@@ -467,6 +491,7 @@
       <button class="chunky" id="smallerBtn" aria-label="Smaller letters">🔍 A−</button>
       <button class="chunky" id="biggerBtn" aria-label="Bigger letters">🔍 A+</button>
       <button class="chunky primary" id="readBtn">🔊 Read it</button>
+      <button class="chunky" id="printBtn">🖨️ Print</button>
       <button class="chunky" id="clearBtn">✨ New page</button>
       <button class="chunky" id="wordsBtn">📖 Magic words</button>
     </div>
@@ -492,6 +517,7 @@
         <div class="word-scroll" id="wordsList"></div>
       </aside>
     </div>
+    <div class="print-foot" id="printFoot"></div>
   </section>
 
   <!-- Copy-Cat: copy the word under the picture -->
@@ -756,7 +782,7 @@ function singulars(w) {
   const out = [w];
   if (w.length > 3 && w.endsWith('ies')) out.push(w.slice(0, -3) + 'y');
   if (w.length > 3 && w.endsWith('es')) out.push(w.slice(0, -2));
-  if (w.length > 2 && w.endsWith('s')) out.push(w.slice(0, -1));
+  if (w.length > 3 && w.endsWith('s')) out.push(w.slice(0, -1)); // not 3-letter words: "his" isn't more than one "hi"
   return out;
 }
 function lookupEmoji(word) {
@@ -1048,6 +1074,7 @@ const Pad = (() => {
     }
     display.innerHTML = html + '<span class="caret"></span>';
     hint.style.display = v ? 'none' : '';
+    keepCaretVisible();
     const popped = display.querySelector('.emo.pop');
     if (popped) {
       const [x, y] = centerOf(popped);
@@ -1055,7 +1082,15 @@ const Pad = (() => {
       confetti(x, y, 18);
     }
     popAt = -1;
-    paper.scrollTop = paper.scrollHeight;
+  }
+
+  // When the cursor's line goes below the bottom of the notepad, scroll up just enough to show the whole line
+  function keepCaretVisible() {
+    const caret = display.querySelector('.caret');
+    const lineH = parseFloat(getComputedStyle(paper).fontSize) * 1.5;
+    const line = Math.floor((caret.offsetTop - display.offsetTop) / lineH);
+    const bottom = display.offsetTop + (line + 1) * lineH;
+    if (bottom > paper.scrollTop + paper.clientHeight) paper.scrollTop = bottom - paper.clientHeight;
   }
 
   function caretToEnd() {
@@ -1104,6 +1139,14 @@ const Pad = (() => {
 
   $('#smallerBtn').addEventListener('click', () => { sizeIdx = Math.max(0, sizeIdx - 1); applySize(); render(); });
   $('#biggerBtn').addEventListener('click', () => { sizeIdx = Math.min(SIZES.length - 1, sizeIdx + 1); applySize(); render(); });
+  $('#printBtn').addEventListener('click', () => {
+    if (!input.value.trim()) { say('Type something first, then you can print it!', { force: true }); return; }
+    window.print();
+  });
+  // Also runs for Cmd+P / Ctrl+P
+  window.addEventListener('beforeprint', () => {
+    $('#printFoot').textContent = `Made with Funpad ✨ · ${new Date().toLocaleDateString(undefined, { dateStyle: 'long' })}`;
+  });
   $('#readBtn').addEventListener('click', () => {
     const text = input.value.replace(/\p{Extended_Pictographic}|️|‍/gu, ' ').trim();
     say(text || 'Type something first, and I will read it to you!', { force: true, rate: 0.85 });
