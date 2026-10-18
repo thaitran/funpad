@@ -204,9 +204,6 @@
     80% { transform: translateX(6px); }
   }
 
-  /* The letters to type and the keys show as capitals; the words stay lowercase underneath so speech says "b", not "capital B" */
-  .boxes, .b-word, .key { text-transform: uppercase; }
-
   /* ---------- Copy-Cat ---------- */
   .cc-card {
     flex: 1; min-height: 0;
@@ -311,7 +308,6 @@
     display: grid; place-items: center;
     font-size: calc(var(--s) * .5); font-weight: 700;
     color: hsl(var(--h), 70%, 35%);
-    text-transform: uppercase;
     background:
       radial-gradient(circle at 30% 26%, rgba(255, 255, 255, .95) 0 7%, rgba(255, 255, 255, .3) 8% 22%, transparent 23%),
       radial-gradient(circle, hsla(var(--h), 90%, 80%, .15) 40%, hsla(var(--h), 90%, 65%, .5) 85%, hsla(var(--h), 90%, 60%, .8) 100%);
@@ -320,8 +316,10 @@
     transition: box-shadow .3s;
   }
   .bub.target { box-shadow: 0 0 0 8px rgba(255, 210, 63, .55), 0 0 30px rgba(255, 210, 63, .8); }
+  .bub { animation: bubIn .5s cubic-bezier(.2, 1.6, .4, 1); }
   .bub.popping { animation: bubPop .28s ease-out forwards; }
   .bub.away { transition: opacity .5s; opacity: 0; }
+  @keyframes bubIn { from { scale: 0; } }
   @keyframes bubPop { 60% { scale: 1.5; opacity: .8; } 100% { scale: 1.9; opacity: 0; } }
   .bub-start {
     position: absolute; inset: 0;
@@ -1201,7 +1199,13 @@ const Bubbles = (() => {
   let level = store.get('bLevel', 'slow');
   let popped = store.get('popped', 0);
   let bubbles = [];
-  let raf = 0, last = 0, sinceSpawn = 0, misses = 0, target = null, greeted = false;
+  let raf = 0, last = 0, sinceSpawn = 0, misses = 0, target = null;
+  // Bubble speech takes turns, so a new letter never cuts off the one before it
+  let speechQueue = Promise.resolve();
+  function announce(text, bubble) {
+    speechQueue = speechQueue.then(() =>
+      mode === 'bubbles' && (!bubble || bubbles.includes(bubble)) ? say(text, { rate: 1.1 }) : null);
+  }
 
   function paintLevels() {
     $$('#bLevels button').forEach(b => b.classList.toggle('active', b.dataset.level === level));
@@ -1221,8 +1225,10 @@ const Bubbles = (() => {
     el.style.setProperty('--h', Math.floor(Math.random() * 360));
     area.appendChild(el);
     const x = Math.random() * Math.max(0, area.clientWidth - size - 40) + 20;
-    bubbles.push({ el, ch, size, x, p: 0, phase: Math.random() * 6 });
+    const b = { el, ch, size, x, p: 0, phase: Math.random() * 6 };
+    bubbles.push(b);
     sinceSpawn = 0;
+    announce(ch, b);
     startMsg.style.display = 'none';
   }
   function remove(b) {
@@ -1248,8 +1254,9 @@ const Bubbles = (() => {
     for (const b of [...bubbles]) {
       b.p += dt / L.rise;
       const x = Math.min(b.x, W - b.size) + Math.sin(b.phase + b.p * 9) * 14;
-      const y = H - b.p * (H + b.size);
-      b.el.style.transform = `translate(${x}px, ${y}px)`;
+      const y = (H - b.size) - b.p * H; // starts sitting on the bottom, ends just past the top
+      // Position goes in `translate`, not `transform`, so the grow-in and pop scaling happen in place
+      b.el.style.translate = `${x}px ${y}px`;
       if (b.p >= 1) {
         // Floated away: no penalty, it just drifts off
         remove(b);
@@ -1266,7 +1273,6 @@ const Bubbles = (() => {
     stop();
     last = performance.now();
     raf = requestAnimationFrame(tick);
-    if (!greeted) { greeted = true; say('Pop the bubbles!'); }
   }
   function stop() {
     cancelAnimationFrame(raf);
@@ -1307,9 +1313,7 @@ const Bubbles = (() => {
     if (popped % 10 === 0) {
       bigCelebration();
       sfx.win();
-      say(`${popped} bubbles! You're a bubble popping champion!`);
-    } else {
-      say(ch, { rate: 1.1 });
+      announce(`${popped} bubbles! You're a bubble popping champion!`);
     }
   }
 
