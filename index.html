@@ -1,0 +1,1354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Funpad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #2d2a4a;
+    --ink-soft: #6b6890;
+    --ghost: #d4d0ea;
+    --accent: #ff5c93;
+    --accent-2: #6c5ce7;
+    --yellow: #ffd23f;
+    --green: #2ecc8f;
+    --card: #ffffff;
+    --pad-size: 64px;
+    --font: 'Fredoka', 'Arial Rounded MT Bold', 'Chalkboard SE', 'Comic Sans MS', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--font);
+    color: var(--ink);
+    background: linear-gradient(160deg, #fff4dc 0%, #ffe3ef 45%, #dcefff 100%);
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  button { font-family: inherit; color: inherit; cursor: pointer; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+  }
+  .logo {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: var(--accent-2);
+    white-space: nowrap;
+  }
+  .logo span { color: var(--accent); }
+  .tabs { display: flex; gap: 10px; margin: 0 auto; }
+  .tab {
+    display: flex; align-items: center; gap: 8px;
+    border: 0;
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 20px 8px 14px;
+    font-size: 22px; font-weight: 600;
+    box-shadow: 0 4px 0 #e2dcf5;
+    transition: transform .1s, background .2s, box-shadow .1s;
+  }
+  .tab { white-space: nowrap; }
+  .tab .ico { font-size: 30px; line-height: 1; }
+  .tab:active { transform: translateY(3px); box-shadow: 0 1px 0 #e2dcf5; }
+  .tab.active { background: var(--accent-2); color: #fff; box-shadow: 0 4px 0 #4b3bc4; }
+  .icon-btn {
+    border: 0; background: #fff;
+    width: 52px; height: 52px; border-radius: 50%;
+    font-size: 26px;
+    box-shadow: 0 4px 0 #e2dcf5;
+    flex: none;
+  }
+  .icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #e2dcf5; }
+  .icon-btn.off { opacity: .45; }
+  .right-tools { display: flex; gap: 10px; }
+  body.mode-pad #hintBtn { visibility: hidden; }
+
+  /* ---------- Screens ---------- */
+  main { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0 16px 14px; }
+  .screen { display: none; flex: 1; flex-direction: column; min-height: 0; gap: 12px; }
+  .screen.active { display: flex; }
+
+  .chunky {
+    border: 0; background: #fff;
+    border-radius: 18px;
+    padding: 10px 18px;
+    font-size: 22px; font-weight: 600;
+    box-shadow: 0 4px 0 #e2dcf5;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .chunky:active { transform: translateY(3px); box-shadow: 0 1px 0 #e2dcf5; }
+  .chunky.primary { background: var(--accent); color: #fff; box-shadow: 0 4px 0 #c93a6c; }
+  .chunky.warn { background: #ff9f43; color: #fff; box-shadow: 0 4px 0 #d07720; }
+
+  /* ---------- Notepad ---------- */
+  .pad-tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .paper {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background-color: var(--card);
+    border-radius: 32px;
+    box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
+    font-size: var(--pad-size);
+    line-height: 1.5;
+    padding: .25em .6em;
+    overflow-y: auto;
+    cursor: text;
+    background-image: repeating-linear-gradient(to bottom,
+      transparent 0, transparent calc(1.5em - 3px), #e6e9ff calc(1.5em - 3px), #e6e9ff 1.5em);
+    background-attachment: local;
+    background-position: 0 .25em;
+  }
+  #padDisplay {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-weight: 500;
+    min-height: 1.5em;
+  }
+  #padDisplay .hit { font-weight: 700; }
+  #padDisplay .emo { display: inline-block; }
+  #padDisplay .emo.pop { animation: emoPop .7s cubic-bezier(.2, 1.6, .4, 1); }
+  @keyframes emoPop {
+    0% { transform: scale(0) rotate(-40deg); }
+    60% { transform: scale(1.5) rotate(10deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .caret {
+    display: inline-block;
+    width: .08em; height: 1em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    background: var(--accent);
+    border-radius: 4px;
+    animation: caretBlink 1s steps(1) infinite;
+  }
+  @keyframes caretBlink { 50% { opacity: 0; } }
+  .pad-hint {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+    font-size: 28px;
+    color: var(--ink-soft);
+    pointer-events: none;
+    padding: 0 20px;
+    line-height: 1.6;
+  }
+  .pad-hint b { color: var(--accent-2); }
+  .pad-hint kbd {
+    font-family: inherit; background: #f1eeff; border-radius: 8px;
+    padding: 2px 10px; box-shadow: 0 3px 0 #dcd6f5;
+  }
+  .hidden-input {
+    position: absolute; top: 0; left: 0;
+    width: 1px; height: 1px;
+    opacity: 0; border: 0; padding: 0;
+    font-size: 16px; /* stops iOS zooming */
+    resize: none;
+  }
+
+  /* ---------- Shared game bits ---------- */
+  .game-top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap;
+  }
+  .seg { display: flex; background: #fff; border-radius: 999px; padding: 5px; box-shadow: 0 4px 0 #e2dcf5; }
+  .seg button {
+    border: 0; background: transparent; border-radius: 999px;
+    padding: 8px 16px; font-size: 20px; font-weight: 600;
+  }
+  .seg button.active { background: var(--yellow); }
+  .score {
+    background: #fff; border-radius: 999px; padding: 8px 18px;
+    font-size: 24px; font-weight: 700;
+    box-shadow: 0 4px 0 #e2dcf5;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .slots { display: flex; gap: 2px; font-size: 22px; }
+  .slots span { filter: grayscale(1) opacity(.3); transition: filter .3s, transform .3s; }
+  .slots span.on { filter: none; transform: scale(1.15); }
+
+  .boxes { display: flex; justify-content: center; gap: .12em; font-size: clamp(48px, min(9vw, 11vh), 112px); font-weight: 700; flex-wrap: wrap; }
+  .box {
+    min-width: .9em; text-align: center;
+    line-height: 1.15;
+    color: var(--ghost);
+    border-bottom: .07em solid var(--ghost);
+    border-radius: 4px;
+    transition: color .15s;
+  }
+  .box.current { border-bottom-color: var(--accent); animation: underlinePulse 1s ease-in-out infinite; }
+  .box.done { animation: letterPop .35s cubic-bezier(.2, 1.8, .4, 1); }
+  .box.wobble { animation: wobble .4s; }
+  @keyframes underlinePulse { 50% { border-bottom-color: #ffc2d6; } }
+  @keyframes letterPop { 0% { transform: scale(.4); } 100% { transform: scale(1); } }
+  @keyframes wobble {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-10px) rotate(-6deg); }
+    40% { transform: translateX(10px) rotate(6deg); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  /* The letters to type and the keys show as capitals; the words stay lowercase underneath so speech says "b", not "capital B" */
+  .boxes, .b-word, .key { text-transform: uppercase; }
+
+  /* ---------- Copy-Cat ---------- */
+  .cc-card {
+    flex: 1; min-height: 0;
+    background: var(--card);
+    border-radius: 32px;
+    box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2vh; padding: 16px;
+  }
+  .cc-emoji {
+    font-size: clamp(80px, 22vh, 200px);
+    line-height: 1;
+    animation: bob 2.4s ease-in-out infinite;
+    cursor: pointer;
+  }
+  .cc-emoji.cheer { animation: cheer .8s ease-in-out; }
+  @keyframes bob { 50% { transform: translateY(-10px) rotate(3deg); } }
+  @keyframes cheer {
+    0% { transform: scale(1); } 30% { transform: scale(1.35) rotate(-10deg); }
+    60% { transform: scale(1.2) rotate(10deg); } 100% { transform: scale(1); }
+  }
+  .cc-actions { display: flex; gap: 12px; }
+
+  /* ---------- Monster ---------- */
+  .stage {
+    flex: 1; min-height: 0;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: end;
+    background: var(--card);
+    border-radius: 32px;
+    box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
+    padding: 16px 24px 8px;
+    overflow: hidden;
+    background-image: linear-gradient(to top, #e9fbe9 0, #e9fbe9 18%, transparent 18%);
+  }
+  .monster-col { display: flex; justify-content: center; align-items: flex-end; height: 100%; }
+  .monster-wrap {
+    width: min(34vw, 36vh, 300px);
+    transform-origin: 50% 100%;
+    transition: transform .8s cubic-bezier(.2, 1.6, .4, 1);
+    cursor: pointer;
+  }
+  .monster { width: 100%; display: block; overflow: visible; }
+  .monster .skin { fill: var(--mcolor, #7ed957); transition: fill .6s; }
+  .monster .dark { fill: var(--mdark, #4caf50); transition: fill .6s; }
+  .monster .m-body { animation: monsterBob 2s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+  @keyframes monsterBob { 50% { transform: scale(1.03, .97); } }
+  .monster .eye { transform-box: fill-box; transform-origin: center; animation: blink 4.5s infinite; }
+  @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+  .monster .eyes-happy { display: none; }
+  .monster.happy .eyes-happy { display: inline; }
+  .monster.happy .eyes-open { display: none; }
+  .monster .mouth {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    transform: scaleY(var(--open, .3));
+    transition: transform .25s;
+  }
+  .monster.nope { animation: nope .5s; }
+  @keyframes nope {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-7deg); }
+    75% { transform: rotate(7deg); }
+  }
+  .food-col {
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    height: 100%; gap: 12px;
+  }
+  .bubble {
+    position: relative;
+    background: #f4f1ff;
+    border-radius: 28px;
+    padding: 14px 24px;
+    text-align: center;
+    max-width: 100%;
+    cursor: pointer;
+  }
+  .bubble::after {
+    content: ''; position: absolute; left: -18px; bottom: 26px;
+    border: 14px solid transparent; border-right: 20px solid #f4f1ff; border-left: 0;
+  }
+  .b-line { font-size: clamp(18px, 2.6vh, 26px); color: var(--ink-soft); }
+  .b-word { font-size: clamp(34px, 6vh, 58px); font-weight: 700; color: var(--accent-2); line-height: 1.15; }
+  .b-sub { font-size: clamp(18px, 2.6vh, 26px); color: var(--ink-soft); }
+  .food { font-size: clamp(70px, 15vh, 140px); line-height: 1; padding-bottom: 4vh; transition: transform .35s cubic-bezier(.3, 1.4, .5, 1); }
+  .food-inner { display: inline-block; animation: foodBob 1.6s ease-in-out infinite; }
+  @keyframes foodBob { 50% { transform: translateY(-14px) rotate(-6deg); } }
+
+  /* ---------- Bubble Pop ---------- */
+  .bub-area {
+    position: relative;
+    flex: 1; min-height: 0;
+    overflow: hidden;
+    border-radius: 32px;
+    background: linear-gradient(to top, #b9e6ff 0%, #def3ff 55%, #f6fbff 100%);
+    box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
+  }
+  .bub {
+    position: absolute; left: 0; top: 0;
+    width: var(--s); height: var(--s);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: calc(var(--s) * .5); font-weight: 700;
+    color: hsl(var(--h), 70%, 35%);
+    text-transform: uppercase;
+    background:
+      radial-gradient(circle at 30% 26%, rgba(255, 255, 255, .95) 0 7%, rgba(255, 255, 255, .3) 8% 22%, transparent 23%),
+      radial-gradient(circle, hsla(var(--h), 90%, 80%, .15) 40%, hsla(var(--h), 90%, 65%, .5) 85%, hsla(var(--h), 90%, 60%, .8) 100%);
+    border: 3px solid hsla(var(--h), 90%, 60%, .55);
+    will-change: transform;
+    transition: box-shadow .3s;
+  }
+  .bub.target { box-shadow: 0 0 0 8px rgba(255, 210, 63, .55), 0 0 30px rgba(255, 210, 63, .8); }
+  .bub.popping { animation: bubPop .28s ease-out forwards; }
+  .bub.away { transition: opacity .5s; opacity: 0; }
+  @keyframes bubPop { 60% { scale: 1.5; opacity: .8; } 100% { scale: 1.9; opacity: 0; } }
+  .bub-start {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(22px, 3.4vh, 32px); color: var(--ink-soft); text-align: center; padding: 20px;
+    pointer-events: none;
+  }
+
+  /* ---------- On-screen keyboard ---------- */
+  .keyboard { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 4px; margin-top: 18px; /* clears the cards' 10px drop shadow */ }
+  body.mode-pad .keyboard { display: none; }
+  .kb-row { display: flex; gap: 8px; }
+  .key {
+    width: clamp(28px, 8vw, 70px);
+    height: clamp(42px, 7.5vh, 64px);
+    border: 0; border-radius: 14px;
+    background: #fff;
+    font-size: clamp(22px, 3.6vh, 32px); font-weight: 600;
+    box-shadow: 0 4px 0 #e2dcf5;
+    transition: transform .08s, box-shadow .08s, background .2s;
+    touch-action: manipulation;
+  }
+  .key.pressed { transform: translateY(3px); box-shadow: 0 1px 0 #e2dcf5; background: #f1eeff; }
+  .key.next { background: var(--yellow); box-shadow: 0 4px 0 #d9a900; animation: keyGlow 1s ease-in-out infinite; }
+  .key.next.pressed { box-shadow: 0 1px 0 #d9a900; }
+  @keyframes keyGlow { 50% { box-shadow: 0 4px 0 #d9a900, 0 0 0 8px rgba(255, 210, 63, .45); } }
+
+  /* ---------- Effects ---------- */
+  #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+  .conf { position: absolute; width: 12px; height: 16px; border-radius: 3px; }
+  .floater { position: absolute; line-height: 1; }
+
+  @media (max-width: 1080px) {
+    .topbar { flex-wrap: wrap; justify-content: space-between; }
+    .tabs { order: 3; width: 100%; justify-content: center; }
+    .tab { padding: 6px 12px 6px 10px; font-size: 17px; }
+    .tab .ico { font-size: 24px; }
+    .logo { font-size: 24px; }
+    .icon-btn { width: 44px; height: 44px; font-size: 22px; }
+    .kb-row { gap: 5px; }
+    .keyboard { gap: 6px; }
+    .seg button { padding: 6px 10px; font-size: 16px; }
+    .score { font-size: 18px; padding: 6px 12px; }
+    .stage { padding: 12px; }
+  }
+  /* Phones: stack each tab's icon over its label so all four fit */
+  @media (max-width: 520px) {
+    .tabs { gap: 6px; }
+    .tab { flex-direction: column; gap: 0; padding: 4px 10px; font-size: 13px; border-radius: 16px; }
+  }
+</style>
+</head>
+<body class="mode-pad">
+
+<header class="topbar">
+  <div class="logo">Fun<span>pad</span> ✨</div>
+  <nav class="tabs">
+    <button class="tab" data-mode="pad"><span class="ico">📝</span>Write</button>
+    <button class="tab" data-mode="copy"><span class="ico">🐱</span>Copy-Cat</button>
+    <button class="tab" data-mode="monster"><span class="ico">👾</span>Monster</button>
+    <button class="tab" data-mode="bubbles"><span class="ico">🫧</span>Bubbles</button>
+  </nav>
+  <div class="right-tools">
+    <button class="icon-btn" id="hintBtn" aria-label="Key hints">💡</button>
+    <button class="icon-btn" id="muteBtn" aria-label="Sound on or off">🔊</button>
+  </div>
+</header>
+
+<main>
+  <!-- Write: notepad where words turn into emoji -->
+  <section class="screen" id="pad">
+    <div class="pad-tools">
+      <button class="chunky" id="smallerBtn" aria-label="Smaller letters">🔍 A−</button>
+      <button class="chunky" id="biggerBtn" aria-label="Bigger letters">🔍 A+</button>
+      <button class="chunky primary" id="readBtn">🔊 Read it</button>
+      <button class="chunky" id="clearBtn">✨ New page</button>
+    </div>
+    <div class="paper" id="paper">
+      <div id="padDisplay"></div>
+      <div class="pad-hint" id="padHint">Type a word like <b>cat</b>, <b>pizza</b> or <b>rocket</b><br>then press <kbd>space</kbd> ✨</div>
+      <textarea class="hidden-input" id="padInput" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Notepad"></textarea>
+    </div>
+  </section>
+
+  <!-- Copy-Cat: copy the word under the picture -->
+  <section class="screen" id="copy">
+    <div class="game-top">
+      <div class="seg" id="ccLevels">
+        <button data-level="easy">🐣 Easy</button>
+        <button data-level="medium">🐥 Medium</button>
+        <button data-level="hard">🦅 Hard</button>
+      </div>
+      <div class="score"><span class="slots" id="ccSlots"></span><span id="ccStars">⭐ 0</span></div>
+    </div>
+    <div class="cc-card" id="ccCard">
+      <div class="cc-emoji" id="ccEmoji" title="Hear the word">🐱</div>
+      <div class="boxes" id="ccBoxes"></div>
+      <div class="cc-actions">
+        <button class="chunky primary" id="ccHear">🔊 Hear it</button>
+        <button class="chunky" id="ccSkip">⏭ New word</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feed the Monster -->
+  <section class="screen" id="monster">
+    <div class="game-top">
+      <div class="seg" id="mLevels">
+        <button data-level="abc">🔤 ABC</button>
+        <button data-level="short">🍪 Short</button>
+        <button data-level="long">🍕 Long</button>
+      </div>
+      <div class="score" id="fedCount">🍽️ 0 snacks</div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="monster-col">
+        <div class="monster-wrap" id="mWrap" title="Hear the monster">
+          <svg class="monster" id="mSvg" viewBox="0 0 200 210" aria-label="Hungry monster">
+            <g class="m-body">
+              <path d="M54 52 L42 6 L80 38 Z" fill="#ffe082"/>
+              <path d="M146 52 L158 6 L120 38 Z" fill="#ffe082"/>
+              <ellipse class="dark" cx="64" cy="194" rx="26" ry="13"/>
+              <ellipse class="dark" cx="136" cy="194" rx="26" ry="13"/>
+              <ellipse class="dark" cx="18" cy="128" rx="14" ry="24"/>
+              <ellipse class="dark" cx="182" cy="128" rx="14" ry="24"/>
+              <ellipse class="skin" cx="100" cy="112" rx="86" ry="84"/>
+              <ellipse cx="100" cy="166" rx="46" ry="24" fill="#fff" opacity=".3"/>
+              <g class="eyes-open">
+                <g class="eye"><circle cx="70" cy="76" r="21" fill="#fff"/><circle cx="76" cy="79" r="10" fill="#2d2a4a"/><circle cx="79" cy="75" r="3.5" fill="#fff"/></g>
+                <g class="eye"><circle cx="130" cy="76" r="21" fill="#fff"/><circle cx="136" cy="79" r="10" fill="#2d2a4a"/><circle cx="139" cy="75" r="3.5" fill="#fff"/></g>
+              </g>
+              <g class="eyes-happy" fill="none" stroke="#2d2a4a" stroke-width="7" stroke-linecap="round">
+                <path d="M52 82 Q70 60 88 82"/><path d="M112 82 Q130 60 148 82"/>
+              </g>
+              <circle cx="40" cy="108" r="11" fill="#ff8fb1" opacity=".6"/>
+              <circle cx="160" cy="108" r="11" fill="#ff8fb1" opacity=".6"/>
+              <g class="mouth" id="mMouth">
+                <ellipse cx="100" cy="128" rx="40" ry="28" fill="#5b1a3a"/>
+                <ellipse cx="100" cy="144" rx="22" ry="10" fill="#ff7aa8"/>
+                <path d="M77 104 L85 117 L93 101 Z" fill="#fff"/>
+                <path d="M107 101 L115 117 L123 104 Z" fill="#fff"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div class="food-col">
+        <div class="bubble" id="mBubble"></div>
+        <div class="food" id="food"><span class="food-inner" id="foodEmoji">🍪</span></div>
+      </div>
+    </div>
+    <div class="boxes" id="mBoxes"></div>
+  </section>
+
+  <!-- Bubble Pop: press the letter to pop its bubble -->
+  <section class="screen" id="bubbles">
+    <div class="game-top">
+      <div class="seg" id="bLevels">
+        <button data-level="slow">🐢 Slow</button>
+        <button data-level="medium">🐇 Medium</button>
+        <button data-level="fast">🚀 Fast</button>
+      </div>
+      <div class="score" id="bScore">🫧 0 popped</div>
+    </div>
+    <div class="bub-area" id="bubArea">
+      <div class="bub-start" id="bubStart">Press the letter on a bubble to pop it! 🫧</div>
+    </div>
+  </section>
+
+  <div class="keyboard" id="keyboard"></div>
+</main>
+
+<div id="fx"></div>
+
+<script>
+'use strict';
+
+/* ================= Helpers ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const CONFETTI = ['#ff5c93', '#ff9f43', '#ffd23f', '#2ecc8f', '#4cc9f0', '#6c5ce7', '#f368e0'];
+const INKS = ['#e84393', '#e17000', '#00a86b', '#0984e3', '#6c5ce7', '#d63031', '#00999e'];
+
+// Saved settings and progress (works even if storage is blocked)
+const store = (() => {
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem('funpad') || '{}') || {}; } catch (e) {}
+  return {
+    get: (k, d) => (k in data ? data[k] : d),
+    set: (k, v) => { data[k] = v; try { localStorage.setItem('funpad', JSON.stringify(data)); } catch (e) {} },
+  };
+})();
+
+// Shuffled bag: every item comes up once before any repeats
+function makeBag(items) {
+  let bag = [];
+  return () => {
+    if (!bag.length) bag = [...items].sort(() => Math.random() - 0.5);
+    return bag.pop();
+  };
+}
+
+/* ================= Emoji words ================= */
+const EMOJI_LIST = `
+cat🐱 kitty🐱 kitten🐱 dog🐶 puppy🐶 pig🐷 cow🐮 horse🐴 pony🐴 sheep🐑 goat🐐 chicken🐔 hen🐔 duck🦆
+bird🐦 owl🦉 penguin🐧 frog🐸 fish🐟 whale🐳 shark🦈 dolphin🐬 octopus🐙 crab🦀 turtle🐢 snake🐍
+lion🦁 tiger🐯 bear🐻 panda🐼 koala🐨 monkey🐵 zebra🦓 giraffe🦒 elephant🐘 mouse🐭 mice🐭 rabbit🐰
+bunny🐰 fox🦊 wolf🐺 bee🐝 ant🐜 bug🐛 butterfly🦋 snail🐌 spider🕷️ bat🦇 unicorn🦄 dragon🐉
+dinosaur🦕 dino🦖 trex🦖
+apple🍎 banana🍌 grape🍇 grapes🍇 orange🍊 lemon🍋 cherry🍒 strawberry🍓 watermelon🍉 melon🍈 pear🍐
+peach🍑 carrot🥕 corn🌽 broccoli🥦 pizza🍕 burger🍔 hamburger🍔 fries🍟 hotdog🌭 taco🌮 bread🍞
+cheese🧀 egg🥚 milk🥛 cake🎂 cupcake🧁 cookie🍪 donut🍩 candy🍬 lollipop🍭 chocolate🍫 icecream🍦
+ice🧊 popcorn🍿 pie🥧 juice🧃 water💧 rice🍚 noodles🍜 yam🍠
+sun☀️ moon🌙 star⭐ cloud☁️ rain🌧️ snow❄️ snowman⛄ rainbow🌈 fire🔥 tree🌳 flower🌸 rose🌹 leaf🍃
+earth🌍 world🌍 ocean🌊 sea🌊 wave🌊 beach🏖️ mountain⛰️ volcano🌋
+car🚗 bus🚌 truck🚚 train🚆 plane✈️ airplane✈️ boat⛵ ship🚢 rocket🚀 bike🚲 bicycle🚲 tractor🚜
+police🚓 ambulance🚑 firetruck🚒 helicopter🚁
+ball⚽ soccer⚽ basketball🏀 football🏈 baseball⚾ book📖 pencil✏️ crayon🖍️ paint🎨 music🎵 guitar🎸
+drum🥁 piano🎹 violin🎻 game🎮 gift🎁 present🎁 balloon🎈 party🎉 birthday🎂 robot🤖 teddy🧸 toy🧸
+house🏠 home🏠 school🏫 castle🏰 bed🛏️ door🚪 key🔑 phone📱 computer💻 tv📺 clock⏰ lamp💡 light💡
+bell🔔 box📦 map🗺️ hat🎩 crown👑 sock🧦 shoe👟 shirt👕 dress👗 glasses👓 umbrella☂️
+mom👩 mommy👩 mama👩 dad👨 daddy👨 papa👨 baby👶 boy👦 girl👧 grandma👵 grandpa👴 king🤴 prince🤴
+queen👸 princess👸 ghost👻 alien👽 monster👾
+love❤️ heart❤️ happy😀 smile😊 sad😢 cry😭 mad😠 angry😠 silly🤪 funny😂 laugh😂 cool😎 wow😮
+scared😱 sleep😴 sleepy😴 tired😴 sick🤒 kiss😘 hug🤗 hi👋 hello👋 bye👋 yes👍 good👍 ok👌
+red🔴 blue🔵 green🟢 yellow🟡 purple🟣 black⚫ white⚪ brown🟤
+run🏃 swim🏊 dance💃 sing🎤 eat🍽️
+hand✋ foot🦶 feet🦶 eye👀 eyes👀 nose👃 ear👂 mouth👄 tooth🦷 teeth🦷 brain🧠
+poop💩
+`;
+const EMOJI = {};
+for (const tok of EMOJI_LIST.trim().split(/\s+/)) {
+  const m = tok.match(/^([a-z]+)(.+)$/);
+  if (m) EMOJI[m[1]] = m[2];
+}
+function lookupEmoji(word) {
+  const w = word.toLowerCase();
+  if (EMOJI[w]) return EMOJI[w];
+  if (w.length > 3 && w.endsWith('ies') && EMOJI[w.slice(0, -3) + 'y']) return EMOJI[w.slice(0, -3) + 'y'];
+  if (w.length > 3 && w.endsWith('es') && EMOJI[w.slice(0, -2)]) return EMOJI[w.slice(0, -2)];
+  if (w.length > 2 && w.endsWith('s') && EMOJI[w.slice(0, -1)]) return EMOJI[w.slice(0, -1)];
+  return null;
+}
+const withEmoji = list => list.trim().split(/\s+/).map(w => [w, EMOJI[w]]);
+
+/* ================= Sound ================= */
+let muted = store.get('muted', false);
+let actx = null;
+function audio() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+  }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, dur = 0.12, type = 'sine', vol = 0.2, when = 0, slideTo = 0) {
+  if (muted) return;
+  const c = audio();
+  if (!c) return;
+  const t = c.currentTime + when;
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(c.destination);
+  o.start(t);
+  o.stop(t + dur + 0.05);
+}
+const NOTES = [523, 587, 659, 784, 880, 1047, 1175, 1319];
+const sfx = {
+  key: () => tone(420 + Math.random() * 260, 0.07, 'triangle', 0.12, 0, 900),
+  good: i => tone(NOTES[i % NOTES.length], 0.16, 'triangle', 0.22),
+  oops: () => tone(260, 0.22, 'sine', 0.14, 0, 160),
+  magic: () => { tone(880, 0.12, 'sine', 0.15, 0, 1760); tone(1320, 0.16, 'sine', 0.12, 0.07, 2400); },
+  win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, 'triangle', 0.2, i * 0.09)),
+  chomp: () => [0, 0.16, 0.32].forEach(w => tone(140, 0.08, 'square', 0.12, w, 70)),
+  pop: () => { tone(700, 0.06, 'sine', 0.25, 0, 1600); tone(1800, 0.05, 'triangle', 0.08, 0.03, 2600); },
+  burp: () => tone(110, 0.6, 'sawtooth', 0.12, 0, 55),
+};
+
+/* ================= Speech ================= */
+let voice = null;
+function pickVoice() {
+  const en = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
+  voice = en.find(v => /Samantha|Google US English|Karen|Tessa|Moira/i.test(v.name))
+    || en.find(v => v.default) || en[0] || null;
+}
+if ('speechSynthesis' in window) {
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+// Speaks text; resolves when done (or after a timeout if the browser never says so)
+function say(text, opts = {}) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window) || (muted && !opts.force)) return resolve();
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (voice) u.voice = voice;
+    u.lang = voice ? voice.lang : 'en-US';
+    u.rate = opts.rate ?? 0.9;
+    u.pitch = opts.pitch ?? 1.15;
+    let done = false;
+    const finish = () => { if (!done) { done = true; resolve(); } };
+    u.onend = finish;
+    u.onerror = finish;
+    setTimeout(finish, 800 + text.length * 90);
+    speechSynthesis.speak(u);
+  });
+}
+// In a sentence, voices say a capital letter by its name ("the letter A"); spellings like "ay" get read as words ("eye").
+// A letter spoken on its own goes in lowercase, since a lone capital is read as "capital A".
+const LETTER_NAMES = Object.fromEntries([...'abcdefghijklmnopqrstuvwxyz'].map(c => [c, c.toUpperCase()]));
+const PRAISE = ['Great job!', 'You did it!', 'Awesome!', 'Super!', 'Wow, nice typing!', 'High five!', 'Amazing!'];
+
+/* ================= Effects ================= */
+const fx = $('#fx');
+function confetti(x, y, n = 28, spread = 1) {
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('div');
+    d.className = 'conf';
+    d.style.background = pick(CONFETTI);
+    d.style.left = x + 'px';
+    d.style.top = y + 'px';
+    fx.appendChild(d);
+    const ang = Math.random() * Math.PI * 2;
+    const dist = (60 + Math.random() * 160) * spread;
+    const dx = Math.cos(ang) * dist;
+    const dy = Math.sin(ang) * dist - 60;
+    d.animate([
+      { transform: 'translate(-50%, -50%) rotate(0deg)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 160}px)) rotate(${Math.random() * 720}deg)`, opacity: 0 },
+    ], { duration: 900 + Math.random() * 600, easing: 'cubic-bezier(.2,.7,.4,1)' }).onfinish = () => d.remove();
+  }
+}
+function floatEmoji(em, x, y, size = 140) {
+  const d = document.createElement('div');
+  d.className = 'floater';
+  d.textContent = em;
+  d.style.left = x + 'px';
+  d.style.top = y + 'px';
+  d.style.fontSize = size + 'px';
+  fx.appendChild(d);
+  d.animate([
+    { transform: 'translate(-50%, -50%) scale(.2)', opacity: 0 },
+    { transform: 'translate(-50%, -90%) scale(1.2)', opacity: 1, offset: 0.3 },
+    { transform: 'translate(-50%, -170%) scale(1)', opacity: 0 },
+  ], { duration: 1300, easing: 'ease-out' }).onfinish = () => d.remove();
+}
+function bigCelebration() {
+  const w = innerWidth, h = innerHeight;
+  [[0.2, 0.3], [0.5, 0.2], [0.8, 0.3]].forEach(([fx_, fy], i) =>
+    setTimeout(() => confetti(w * fx_, h * fy, 40, 1.6), i * 200));
+}
+function centerOf(el) {
+  const r = el.getBoundingClientRect();
+  return [r.left + r.width / 2, r.top + r.height / 2];
+}
+
+/* ================= Mode switching ================= */
+let mode = 'pad';
+function setMode(m) {
+  mode = m;
+  store.set('mode', m);
+  document.body.className = 'mode-' + m;
+  $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === m));
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if (m === 'pad') { Pad.render(); Pad.focus(); setNextKey(null); }
+  if (m === 'copy') CopyCat.enter();
+  if (m === 'monster') Monster.enter();
+  if (m === 'bubbles') Bubbles.enter();
+  else Bubbles.stop();
+}
+$$('.tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+
+/* ================= On-screen keyboard ================= */
+let hints = store.get('hints', true);
+const keyEls = {};
+const kb = $('#keyboard');
+['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].forEach(row => {
+  const r = document.createElement('div');
+  r.className = 'kb-row';
+  for (const ch of row) {
+    const k = document.createElement('button');
+    k.className = 'key';
+    k.textContent = ch;
+    k.addEventListener('pointerdown', e => { e.preventDefault(); gameKey(ch); });
+    keyEls[ch] = k;
+    r.appendChild(k);
+  }
+  kb.appendChild(r);
+});
+let nextKey = null;
+function setNextKey(ch, force = false) {
+  nextKey = ch;
+  Object.values(keyEls).forEach(k => k.classList.remove('next'));
+  if (ch && (hints || force) && keyEls[ch]) keyEls[ch].classList.add('next');
+}
+function flashKey(ch) {
+  const k = keyEls[ch];
+  if (!k) return;
+  k.classList.add('pressed');
+  setTimeout(() => k.classList.remove('pressed'), 140);
+}
+function gameKey(ch) {
+  audio();
+  flashKey(ch);
+  if (mode === 'copy') CopyCat.key(ch);
+  else if (mode === 'monster') Monster.key(ch);
+  else if (mode === 'bubbles') Bubbles.key(ch);
+}
+
+/* Header buttons */
+const muteBtn = $('#muteBtn');
+const hintBtn = $('#hintBtn');
+function paintToggles() {
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+  hintBtn.classList.toggle('off', !hints);
+}
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  store.set('muted', muted);
+  if (muted && 'speechSynthesis' in window) speechSynthesis.cancel();
+  paintToggles();
+});
+hintBtn.addEventListener('click', () => {
+  hints = !hints;
+  store.set('hints', hints);
+  setNextKey(nextKey);
+  paintToggles();
+});
+
+/* Shared letter boxes for both games */
+function renderBoxes(el, word, pos) {
+  el.innerHTML = '';
+  [...word].forEach((ch, i) => {
+    const b = document.createElement('span');
+    b.className = 'box' + (i < pos ? ' done' : '') + (i === pos ? ' current' : '');
+    b.textContent = ch;
+    if (i < pos) b.style.color = INKS[i % INKS.length];
+    el.appendChild(b);
+  });
+}
+function markBox(el, i) {
+  const boxes = el.children;
+  const b = boxes[i];
+  b.classList.remove('current');
+  b.classList.add('done');
+  b.style.color = INKS[i % INKS.length];
+  if (boxes[i + 1]) boxes[i + 1].classList.add('current');
+}
+function wobbleBox(el, i) {
+  const b = el.children[i];
+  if (!b) return;
+  b.classList.remove('wobble');
+  void b.offsetWidth;
+  b.classList.add('wobble');
+}
+
+/* ================= Write (notepad) ================= */
+const Pad = (() => {
+  const input = $('#padInput');
+  const display = $('#padDisplay');
+  const paper = $('#paper');
+  const hint = $('#padHint');
+  const SIZES = [36, 48, 64, 84, 108];
+  let sizeIdx = store.get('padSize', 2);
+  let popAt = -1;
+  const seg = 'Segmenter' in Intl ? new Intl.Segmenter('en', { granularity: 'grapheme' }) : null;
+  const graphemes = s => (seg ? Array.from(seg.segment(s), x => x.segment) : Array.from(s));
+  const isEmoji = g => /\p{Extended_Pictographic}/u.test(g);
+  const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const colorFor = w => {
+    let h = 0;
+    for (const c of w.toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return INKS[h % INKS.length];
+  };
+
+  input.value = store.get('padText', '');
+
+  function applySize() {
+    document.documentElement.style.setProperty('--pad-size', SIZES[sizeIdx] + 'px');
+    store.set('padSize', sizeIdx);
+  }
+
+  function render() {
+    const v = input.value;
+    let html = '';
+    const re = /[A-Za-z]+|[^A-Za-z]+/g;
+    let m;
+    while ((m = re.exec(v))) {
+      const s = m[0];
+      if (/^[A-Za-z]/.test(s)) {
+        html += lookupEmoji(s) ? `<span class="hit" style="color:${colorFor(s)}">${s}</span>` : s;
+      } else {
+        let off = m.index;
+        for (const g of graphemes(s)) {
+          html += isEmoji(g) ? `<span class="emo${off === popAt ? ' pop' : ''}">${g}</span>` : esc(g);
+          off += g.length;
+        }
+      }
+    }
+    display.innerHTML = html + '<span class="caret"></span>';
+    hint.style.display = v ? 'none' : '';
+    const popped = display.querySelector('.emo.pop');
+    if (popped) {
+      const [x, y] = centerOf(popped);
+      floatEmoji(popped.textContent, x, y, SIZES[sizeIdx] * 2);
+      confetti(x, y, 18);
+    }
+    popAt = -1;
+    paper.scrollTop = paper.scrollHeight;
+  }
+
+  function caretToEnd() {
+    const n = input.value.length;
+    input.setSelectionRange(n, n);
+  }
+
+  input.addEventListener('input', e => {
+    let v = input.value.slice(0, 3000);
+    const last = v.slice(-1);
+    const inserted = !e.inputType || e.inputType.startsWith('insert');
+    if (inserted && /[\s.,!?]/.test(last)) {
+      // A word just ended: if it's a magic word, add its emoji right after it
+      const before = v.slice(0, -1);
+      const w = before.match(/([A-Za-z]+)$/);
+      const em = w && lookupEmoji(w[1]);
+      if (em) {
+        v = before + ' ' + em + last;
+        popAt = before.length + 1;
+        sfx.magic();
+        if (!muted) say(w[1], { rate: 1 });
+      } else {
+        sfx.key();
+      }
+    } else if (inserted) {
+      sfx.key();
+    }
+    input.value = v;
+    store.set('padText', v);
+    render();
+  });
+  input.addEventListener('keydown', e => {
+    // Keep the cursor at the end, so kids can't get lost in the text
+    if (/^(Arrow|Home|End|Page)/.test(e.key)) e.preventDefault();
+    if ((e.metaKey || e.ctrlKey) && /^[az]$/i.test(e.key)) e.preventDefault();
+  });
+  document.addEventListener('selectionchange', () => {
+    if (document.activeElement === input) caretToEnd();
+  });
+  paper.addEventListener('pointerdown', e => { e.preventDefault(); focus(); });
+
+  function focus() {
+    input.focus({ preventScroll: true });
+    caretToEnd();
+  }
+
+  $('#smallerBtn').addEventListener('click', () => { sizeIdx = Math.max(0, sizeIdx - 1); applySize(); render(); });
+  $('#biggerBtn').addEventListener('click', () => { sizeIdx = Math.min(SIZES.length - 1, sizeIdx + 1); applySize(); render(); });
+  $('#readBtn').addEventListener('click', () => {
+    const text = input.value.replace(/\p{Extended_Pictographic}|️|‍/gu, ' ').trim();
+    say(text || 'Type something first, and I will read it to you!', { force: true, rate: 0.85 });
+  });
+
+  // "New page" needs two taps so it can't wipe the page by accident
+  const clearBtn = $('#clearBtn');
+  let clearTimer = null;
+  clearBtn.addEventListener('click', () => {
+    if (!clearTimer) {
+      clearBtn.textContent = '🗑 Tap again!';
+      clearBtn.classList.add('warn');
+      clearTimer = setTimeout(resetClear, 2500);
+      return;
+    }
+    resetClear();
+    input.value = '';
+    store.set('padText', '');
+    render();
+  });
+  function resetClear() {
+    clearTimeout(clearTimer);
+    clearTimer = null;
+    clearBtn.textContent = '✨ New page';
+    clearBtn.classList.remove('warn');
+  }
+
+  applySize();
+  return { render, focus, input };
+})();
+
+/* ================= Copy-Cat ================= */
+const CopyCat = (() => {
+  const WORDS = {
+    easy: withEmoji('cat dog pig cow bee ant owl fox bat bus car sun egg pie hat bed box key map bug hen toy'),
+    medium: withEmoji('frog fish bear duck lion goat crab bird cake milk corn pear boat ship ball star moon tree rain snow book bell drum sock shoe gift fire king baby home rose leaf taco'),
+    hard: withEmoji('apple horse mouse sheep snake tiger zebra whale shark panda koala bunny puppy snail pizza bread grape lemon candy donut cookie banana cherry carrot robot rocket train truck heart house flower cloud rainbow dragon monkey turtle rabbit penguin unicorn octopus'),
+  };
+  const bags = {};
+  Object.keys(WORDS).forEach(k => { bags[k] = makeBag(WORDS[k]); });
+  const emojiEl = $('#ccEmoji');
+  const boxesEl = $('#ccBoxes');
+  let level = store.get('ccLevel', 'easy');
+  let stars = store.get('stars', 0);
+  let word = '', emoji = '', pos = 0, misses = 0, busy = false;
+
+  function paintLevels() {
+    $$('#ccLevels button').forEach(b => b.classList.toggle('active', b.dataset.level === level));
+  }
+  function paintStars(full = false) {
+    $('#ccStars').textContent = '⭐ ' + stars;
+    const filled = full ? 5 : stars % 5;
+    $('#ccSlots').innerHTML = [0, 1, 2, 3, 4].map(i => `<span class="${i < filled ? 'on' : ''}">⭐</span>`).join('');
+  }
+  function next() {
+    [word, emoji] = bags[level]();
+    pos = 0; misses = 0; busy = false;
+    emojiEl.textContent = emoji;
+    emojiEl.classList.remove('cheer');
+    renderBoxes(boxesEl, word, pos);
+    paintStars();
+    setNextKey(word[0]);
+    if (mode === 'copy') say(word);
+  }
+  function enter() {
+    paintLevels();
+    if (!word) next();
+    else { setNextKey(word[pos]); say(word); }
+  }
+  async function win(lastLetter) {
+    busy = true;
+    stars++;
+    store.set('stars', stars);
+    const fiveStars = stars % 5 === 0;
+    paintStars(fiveStars);
+    setNextKey(null);
+    sfx.win();
+    emojiEl.classList.add('cheer');
+    const [x, y] = centerOf(emojiEl);
+    confetti(x, y, 40);
+    const t0 = Date.now();
+    await say(lastLetter, { rate: 1.1 });
+    await say(`${word}! ${pick(PRAISE)}`);
+    if (fiveStars) {
+      bigCelebration();
+      sfx.win();
+      await say('Five stars! You are a super star!');
+    }
+    await wait(Math.max(200, 1400 - (Date.now() - t0)));
+    if (mode === 'copy') next();
+    else word = '';
+  }
+  function key(ch) {
+    if (busy || !word) return;
+    if (ch === word[pos]) {
+      markBox(boxesEl, pos);
+      sfx.good(pos);
+      pos++;
+      misses = 0;
+      if (pos === word.length) win(ch);
+      else { setNextKey(word[pos]); say(ch, { rate: 1.1 }); }
+    } else {
+      sfx.oops();
+      wobbleBox(boxesEl, pos);
+      misses++;
+      if (misses >= 2) {
+        setNextKey(word[pos], true);
+        say(`Find the letter ${LETTER_NAMES[word[pos]]}`);
+      }
+    }
+  }
+
+  $$('#ccLevels button').forEach(b => b.addEventListener('click', () => {
+    level = b.dataset.level;
+    store.set('ccLevel', level);
+    paintLevels();
+    next();
+  }));
+  $('#ccHear').addEventListener('click', () => say(word, { force: true }));
+  emojiEl.addEventListener('click', () => say(word, { force: true }));
+  $('#ccSkip').addEventListener('click', () => { if (!busy) next(); });
+
+  paintStars();
+  return { enter, key };
+})();
+
+/* ================= Feed the Monster ================= */
+const Monster = (() => {
+  const ABC = [
+    ['a', 'apple'], ['b', 'banana'], ['c', 'cookie'], ['d', 'donut'], ['e', 'egg'], ['f', 'fries'],
+    ['g', 'grapes'], ['h', 'hotdog'], ['i', 'icecream'], ['j', 'juice'], ['k', 'key'], ['l', 'lemon'],
+    ['m', 'milk'], ['n', 'noodles'], ['o', 'orange'], ['p', 'pizza'], ['q', 'queen'], ['r', 'rice'],
+    ['s', 'strawberry'], ['t', 'taco'], ['u', 'umbrella'], ['v', 'volcano'], ['w', 'watermelon'],
+    ['x', 'box'], ['y', 'yam'], ['z', 'zebra'],
+  ].map(([l, w]) => [l, w, EMOJI[w]]);
+  const SPOKEN = { hotdog: 'hot dog', icecream: 'ice cream' };
+  const FOODS = {
+    short: withEmoji('cake pie egg corn pear milk taco sock shoe hat key car bus bell book star moon ball fish rice'),
+    long: withEmoji('cookie pizza apple donut candy grape lemon banana carrot cheese burger bread cherry popcorn rocket robot cupcake rainbow crown cloud'),
+  };
+  const bags = { abc: makeBag(ABC), short: makeBag(FOODS.short), long: makeBag(FOODS.long) };
+  const ASK = ["I'm hungry for", 'Feed me', 'Ooh, can I have', 'Gimme gimme', 'My tummy wants'];
+  const YUM = ['Yum yum!', 'Delicious!', 'Mmm, tasty!', 'Nom nom nom!', 'Thank you!', 'Yummy in my tummy!'];
+  const COLORS = [
+    ['#7ed957', '#4caf50'], ['#b388ff', '#7c4dff'], ['#4fc3f7', '#0288d1'],
+    ['#ff8a65', '#e64a19'], ['#f06292', '#c2185b'], ['#ffd54f', '#f9a825'],
+  ];
+  const svg = $('#mSvg');
+  const wrap = $('#mWrap');
+  const mouth = $('#mMouth');
+  const food = $('#food');
+  const foodEmoji = $('#foodEmoji');
+  const bubble = $('#mBubble');
+  const boxesEl = $('#mBoxes');
+  let level = store.get('mLevel', 'abc');
+  let fed = store.get('fed', 0);
+  let target = '', speech = '', pos = 0, misses = 0, busy = false;
+  let cur = { x: 0, y: 0 };
+
+  function paintLevels() {
+    $$('#mLevels button').forEach(b => b.classList.toggle('active', b.dataset.level === level));
+  }
+  function paintMonster() {
+    const [c, d] = COLORS[Math.floor(fed / 5) % COLORS.length];
+    svg.style.setProperty('--mcolor', c);
+    svg.style.setProperty('--mdark', d);
+    wrap.style.transform = `scale(${1 + Math.min(fed, 40) * 0.006})`;
+    $('#fedCount').textContent = `🍽️ ${fed} snack${fed === 1 ? '' : 's'}`;
+  }
+  const setOpen = v => mouth.style.setProperty('--open', v);
+  function moveFood(x, y) {
+    cur = { x, y };
+    food.style.transform = `translate(${x}px, ${y}px)`;
+  }
+  // How far the food has to travel to reach the monster's mouth
+  function toMouth() {
+    const [fx_, fy] = centerOf(food);
+    const r = svg.getBoundingClientRect();
+    return { dx: r.left + r.width * 0.5 - (fx_ - cur.x), dy: r.top + r.height * 0.62 - (fy - cur.y) };
+  }
+
+  function next() {
+    const item = bags[level]();
+    let word, em;
+    if (level === 'abc') {
+      const [l, w, e] = item;
+      target = l; word = w; em = e;
+      bubble.innerHTML = `<div class="b-line">I'm hungry for the letter</div>
+        <div class="b-word">${l}</div>
+        <div class="b-sub">${l === 'x' ? 'like the end of' : 'like'} ${em} ${SPOKEN[w] || w}</div>`;
+      // Say the letter only once; a sentence starting with "A is…" gets read as the word "a"
+      speech = l === 'x'
+        ? `I'm hungry for the letter X, like the end of box!`
+        : `I'm hungry for the letter ${LETTER_NAMES[l]}, like ${SPOKEN[w] || w}!`;
+    } else {
+      [word, em] = item;
+      target = word;
+      const ask = pick(ASK);
+      bubble.innerHTML = `<div class="b-line">${ask}…</div><div class="b-word">${em} ${word}</div>`;
+      speech = `${ask} ${word}!`;
+    }
+    pos = 0; misses = 0; busy = false;
+    food.getAnimations().forEach(a => a.cancel());
+    food.style.visibility = '';
+    foodEmoji.textContent = em;
+    food.style.transition = 'none';
+    moveFood(0, 0);
+    void food.offsetWidth;
+    food.style.transition = '';
+    setOpen(0.3);
+    svg.classList.remove('happy');
+    renderBoxes(boxesEl, target, 0);
+    setNextKey(target[0]);
+    if (mode === 'monster') say(speech, { pitch: 0.7 });
+  }
+  function enter() {
+    paintLevels();
+    paintMonster();
+    if (!target) next();
+    else { setNextKey(target[pos]); say(speech, { pitch: 0.7 }); }
+  }
+  async function eat() {
+    busy = true;
+    setNextKey(null);
+    const { dx, dy } = toMouth();
+    setOpen(1);
+    await food.animate([
+      { transform: `translate(${cur.x}px, ${cur.y}px) scale(1)` },
+      { transform: `translate(${dx}px, ${dy}px) scale(.25)`, opacity: 0.7 },
+    ], { duration: 450, easing: 'ease-in', fill: 'forwards' }).finished;
+    food.style.visibility = 'hidden';
+    sfx.chomp();
+    mouth.animate(
+      [1, 0.05, 0.8, 0.05, 0.8, 0.05, 0.3].map(s => ({ transform: `scaleY(${s})` })),
+      { duration: 650 });
+    setOpen(0.3);
+    svg.classList.add('happy');
+    fed++;
+    store.set('fed', fed);
+    const [x, y] = centerOf(svg);
+    confetti(x, y - 40, 24);
+    const burp = fed % 5 === 0;
+    $('#fedCount').textContent = `🍽️ ${fed} snack${fed === 1 ? '' : 's'}`;
+    await say(pick(YUM), { pitch: 0.7 });
+    if (burp) {
+      sfx.burp();
+      await wait(400);
+      paintMonster(); // new color and a little bigger every 5 snacks
+      bigCelebration();
+      await say('BURP! Excuse me! Look, I changed color!', { pitch: 0.6 });
+    }
+    await wait(500);
+    if (mode === 'monster') next();
+    else target = '';
+  }
+  function key(ch) {
+    if (busy || !target) return;
+    if (ch === target[pos]) {
+      markBox(boxesEl, pos);
+      sfx.good(pos);
+      pos++;
+      misses = 0;
+      if (pos === target.length) { eat(); return; }
+      // Food creeps toward the monster with every right letter
+      const p = pos / target.length;
+      const { dx, dy } = toMouth();
+      moveFood(dx * p * 0.55, dy * p * 0.55);
+      setOpen(0.3 + 0.6 * p);
+      setNextKey(target[pos]);
+      say(ch, { rate: 1.1 });
+    } else {
+      sfx.oops();
+      wobbleBox(boxesEl, pos);
+      svg.classList.remove('nope');
+      void svg.getBoundingClientRect();
+      svg.classList.add('nope');
+      misses++;
+      if (misses >= 2) {
+        setNextKey(target[pos], true);
+        say(`Not that one! Find the letter ${LETTER_NAMES[target[pos]]}`, { pitch: 0.7 });
+      }
+    }
+  }
+
+  svg.addEventListener('animationend', e => { if (e.animationName === 'nope') svg.classList.remove('nope'); });
+  $$('#mLevels button').forEach(b => b.addEventListener('click', () => {
+    if (busy) return;
+    level = b.dataset.level;
+    store.set('mLevel', level);
+    paintLevels();
+    next();
+  }));
+  wrap.addEventListener('click', () => say(speech, { force: true, pitch: 0.7 }));
+  bubble.addEventListener('click', () => say(speech, { force: true, pitch: 0.7 }));
+
+  paintMonster();
+  return { enter, key };
+})();
+
+/* ================= Bubble Pop ================= */
+const Bubbles = (() => {
+  // max: bubbles on screen at once; rise: seconds to float to the top; gap: ms between new bubbles
+  const LEVELS = {
+    slow: { max: 1, rise: 16, gap: 600 },
+    medium: { max: 2, rise: 13, gap: 2500 },
+    fast: { max: 3, rise: 10, gap: 1800 },
+  };
+  const area = $('#bubArea');
+  const startMsg = $('#bubStart');
+  const nextLetter = makeBag([...'abcdefghijklmnopqrstuvwxyz']);
+  let level = store.get('bLevel', 'slow');
+  let popped = store.get('popped', 0);
+  let bubbles = [];
+  let raf = 0, last = 0, sinceSpawn = 0, misses = 0, target = null, greeted = false;
+
+  function paintLevels() {
+    $$('#bLevels button').forEach(b => b.classList.toggle('active', b.dataset.level === level));
+  }
+  function paintScore() {
+    $('#bScore').textContent = `🫧 ${popped} popped`;
+  }
+  function spawn() {
+    let ch = nextLetter();
+    for (let i = 0; i < 5 && bubbles.some(b => b.ch === ch); i++) ch = nextLetter();
+    if (bubbles.some(b => b.ch === ch)) return;
+    const size = Math.round(Math.min(150, Math.max(90, area.clientHeight * 0.22)) * (0.9 + Math.random() * 0.2));
+    const el = document.createElement('div');
+    el.className = 'bub';
+    el.textContent = ch;
+    el.style.setProperty('--s', size + 'px');
+    el.style.setProperty('--h', Math.floor(Math.random() * 360));
+    area.appendChild(el);
+    const x = Math.random() * Math.max(0, area.clientWidth - size - 40) + 20;
+    bubbles.push({ el, ch, size, x, p: 0, phase: Math.random() * 6 });
+    sinceSpawn = 0;
+    startMsg.style.display = 'none';
+  }
+  function remove(b) {
+    bubbles = bubbles.filter(o => o !== b);
+  }
+  // The bubble closest to the top is the one to pop next
+  function updateTarget() {
+    const top = bubbles.reduce((a, b) => (!a || b.p > a.p ? b : a), null);
+    if (top === target) return;
+    if (target) target.el.classList.remove('target');
+    target = top;
+    misses = 0;
+    if (target && hints) target.el.classList.add('target');
+    setNextKey(target ? target.ch : null);
+  }
+  function tick(t) {
+    const dt = Math.min(0.05, (t - last) / 1000);
+    last = t;
+    const L = LEVELS[level];
+    sinceSpawn += dt * 1000;
+    if (bubbles.length < L.max && (sinceSpawn > L.gap || !bubbles.length)) spawn();
+    const H = area.clientHeight, W = area.clientWidth;
+    for (const b of [...bubbles]) {
+      b.p += dt / L.rise;
+      const x = Math.min(b.x, W - b.size) + Math.sin(b.phase + b.p * 9) * 14;
+      const y = H - b.p * (H + b.size);
+      b.el.style.transform = `translate(${x}px, ${y}px)`;
+      if (b.p >= 1) {
+        // Floated away: no penalty, it just drifts off
+        remove(b);
+        b.el.classList.add('away');
+        setTimeout(() => b.el.remove(), 500);
+      }
+    }
+    updateTarget();
+    raf = requestAnimationFrame(tick);
+  }
+  function enter() {
+    paintLevels();
+    paintScore();
+    stop();
+    last = performance.now();
+    raf = requestAnimationFrame(tick);
+    if (!greeted) { greeted = true; say('Pop the bubbles!'); }
+  }
+  function stop() {
+    cancelAnimationFrame(raf);
+    raf = 0;
+  }
+  function clear() {
+    bubbles.forEach(b => b.el.remove());
+    bubbles = [];
+    target = null;
+    sinceSpawn = 0;
+  }
+  function key(ch) {
+    const b = bubbles.find(o => o.ch === ch);
+    if (!b) {
+      sfx.oops();
+      misses++;
+      if (target && misses >= 2) {
+        setNextKey(target.ch, true);
+        target.el.classList.add('target');
+        say(`Find the letter ${LETTER_NAMES[target.ch]}`);
+        misses = 0;
+      }
+      return;
+    }
+    remove(b);
+    if (b === target) target = null;
+    b.el.classList.remove('target');
+    b.el.classList.add('popping');
+    setTimeout(() => b.el.remove(), 300);
+    const [x, y] = centerOf(b.el);
+    confetti(x, y, 16, 0.6);
+    sfx.pop();
+    popped++;
+    store.set('popped', popped);
+    paintScore();
+    // A new bubble comes up soon after a pop
+    sinceSpawn = Math.max(sinceSpawn, LEVELS[level].gap - 500);
+    if (popped % 10 === 0) {
+      bigCelebration();
+      sfx.win();
+      say(`${popped} bubbles! You're a bubble popping champion!`);
+    } else {
+      say(ch, { rate: 1.1 });
+    }
+  }
+
+  $$('#bLevels button').forEach(b => b.addEventListener('click', () => {
+    level = b.dataset.level;
+    store.set('bLevel', level);
+    paintLevels();
+    clear();
+  }));
+  hintBtn.addEventListener('click', () => {
+    if (target) target.el.classList.toggle('target', hints);
+  });
+
+  return { enter, stop, key };
+})();
+
+/* ================= Global keyboard ================= */
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (mode === 'pad') {
+    if (document.activeElement !== Pad.input) Pad.focus();
+    return;
+  }
+  if (/^[a-zA-Z]$/.test(e.key)) {
+    e.preventDefault();
+    gameKey(e.key.toLowerCase());
+  } else if (e.key === ' ' || e.key === 'Enter' || e.key === 'Backspace') {
+    e.preventDefault(); // stop space/enter from re-pressing the last button tapped
+  }
+});
+// Buttons shouldn't keep focus; in Write mode, go straight back to typing
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b) b.blur();
+  if (mode === 'pad' && b && !b.classList.contains('tab')) Pad.focus();
+});
+
+paintToggles();
+setMode(store.get('mode', 'pad'));
+</script>
+</body>
+</html>
