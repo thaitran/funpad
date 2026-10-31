@@ -75,8 +75,8 @@
   .icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #e2dcf5; }
   .icon-btn.off { opacity: .45; }
   .right-tools { display: flex; gap: 10px; }
-  body.mode-pad #hintBtn { display: none; }
-  #wordsBtn.on { background: var(--accent-2); color: #fff; box-shadow: 0 4px 0 #4b3bc4; }
+  body.mode-pad #hintBtn, body.mode-madlibs #hintBtn { display: none; }
+  .chunky.on { background: var(--accent-2); color: #fff; box-shadow: 0 4px 0 #4b3bc4; }
 
   /* ---------- Screens ---------- */
   main { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0 16px 14px; }
@@ -98,10 +98,10 @@
   /* ---------- Notepad ---------- */
   .pad-tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
   /* Both labels sit in the same spot and only one shows, so the button keeps one width */
-  #readBtn { display: inline-grid; justify-items: center; }
-  #readBtn > span { grid-area: 1 / 1; }
-  #readBtn .lbl-stop, #readBtn.reading .lbl-read { visibility: hidden; }
-  #readBtn.reading .lbl-stop { visibility: visible; }
+  .read-btn { display: inline-grid; justify-items: center; }
+  .read-btn > span { grid-area: 1 / 1; }
+  .read-btn .lbl-stop, .read-btn.reading .lbl-read { visibility: hidden; }
+  .read-btn.reading .lbl-stop { visibility: visible; }
   .paper {
     position: relative;
     flex: 1;
@@ -206,29 +206,6 @@
     80% { transform: translateX(6px); }
   }
 
-  /* ---------- Copy-Cat ---------- */
-  .cc-card {
-    flex: 1; min-height: 0;
-    background: var(--card);
-    border-radius: 32px;
-    box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2vh; padding: 16px;
-  }
-  .cc-emoji {
-    font-size: clamp(80px, 22vh, 200px);
-    line-height: 1;
-    animation: bob 2.4s ease-in-out infinite;
-    cursor: pointer;
-  }
-  .cc-emoji.cheer { animation: cheer .8s ease-in-out; }
-  @keyframes bob { 50% { transform: translateY(-10px) rotate(3deg); } }
-  @keyframes cheer {
-    0% { transform: scale(1); } 30% { transform: scale(1.35) rotate(-10deg); }
-    60% { transform: scale(1.2) rotate(10deg); } 100% { transform: scale(1); }
-  }
-  .cc-actions { display: flex; gap: 12px; }
-
   /* ---------- Monster ---------- */
   .stage {
     flex: 1; min-height: 0;
@@ -289,7 +266,6 @@
   }
   .b-line { font-size: clamp(18px, 2.6vh, 26px); color: var(--ink-soft); }
   .b-word { font-size: clamp(34px, 6vh, 58px); font-weight: 700; color: var(--accent-2); line-height: 1.15; }
-  .b-sub { font-size: clamp(18px, 2.6vh, 26px); color: var(--ink-soft); }
   .food { font-size: clamp(70px, 15vh, 140px); line-height: 1; padding-bottom: 4vh; transition: transform .35s cubic-bezier(.3, 1.4, .5, 1); }
   .food-inner { display: inline-block; animation: foodBob 1.6s ease-in-out infinite; }
   @keyframes foodBob { 50% { transform: translateY(-14px) rotate(-6deg); } }
@@ -398,6 +374,39 @@
   }
   .wp-search:focus { border-color: var(--accent-2); }
   .wp-count { font-size: 15px; color: var(--ink-soft); }
+  .wp-row { display: flex; align-items: center; gap: 10px; }
+  .wp-row .wp-search { flex: 1; min-width: 0; }
+  .wp-body { flex: 1; min-height: 0; display: flex; }
+  .wp-body .word-scroll { min-width: 0; }
+  .scroll-col { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 12px 16px 0; }
+  #wordsList { scrollbar-width: none; } /* replaced by the big scrollbar below */
+  #wordsList::-webkit-scrollbar { display: none; }
+  /* A kid-sized scrollbar: wide, with a big handle to drag, and tap anywhere on it to jump there */
+  .kbar {
+    position: relative;
+    flex: 1;
+    width: 28px;
+    border-radius: 999px;
+    background: #efeafd;
+    cursor: pointer;
+    touch-action: none;
+  }
+  .kbar-thumb {
+    position: absolute; left: 0; right: 0; top: 0;
+    border-radius: 999px;
+    background: var(--accent-2);
+    box-shadow: 0 3px 0 #4b3bc4;
+    cursor: grab;
+  }
+  .kbar-thumb::after { /* grip lines */
+    content: ''; position: absolute; left: 50%; top: 50%;
+    width: 12px; height: 10px; transform: translate(-50%, -50%);
+    background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .85) 0 2px, transparent 2px 4px);
+  }
+  .kbar.dragging .kbar-thumb { cursor: grabbing; background: #5a4bd6; }
+  .kbar.idle { opacity: .3; pointer-events: none; }
+  .scroll-col .icon-btn { font-size: 20px; color: var(--accent-2); }
+  .scroll-col .icon-btn:disabled { opacity: .3; cursor: default; }
   .word-scroll { flex: 1; overflow-y: auto; padding: 4px 16px 20px; }
   .word-group { margin: 14px 0 8px; font-size: 22px; font-weight: 700; color: var(--accent-2); }
   .word-group small { font-size: 15px; font-weight: 500; color: var(--ink-soft); }
@@ -417,9 +426,47 @@
     .words-panel { position: absolute; top: 0; right: 0; bottom: 0; z-index: 5; width: min(510px, 92%); box-shadow: 0 20px 50px rgba(45, 42, 74, .3); }
   }
 
+  /* ---------- Mad Libs ---------- */
+  .story-card {
+    flex: 1; min-width: 0; min-height: 0;
+    overflow-y: auto;
+    background: var(--card);
+    border-radius: 32px;
+    box-shadow: 0 10px 0 #ecdff5, 0 20px 40px rgba(108, 92, 231, .12);
+    padding: .6em .9em 1em;
+    font-size: var(--ml-size, 44px);
+    line-height: 1.9;
+    font-weight: 500;
+  }
+  .story-title { margin: 0 0 .3em; font-size: 1.1em; line-height: 1.3; color: var(--accent-2); }
+  /* A blank is a box holding the typed word and, for a magic word, its emoji */
+  .ml-slot {
+    display: inline-flex; align-items: baseline;
+    white-space: nowrap;
+    line-height: 1.25;
+    padding: 0 .12em;
+    border-bottom: .08em dashed var(--accent-2);
+    border-radius: .2em .2em 0 0;
+    background: #f6f3ff;
+    cursor: text;
+  }
+  .ml-slot:focus-within { background: #fff3c4; border-bottom: .08em solid var(--accent); }
+  .ml-blank {
+    font: inherit; color: var(--ink); line-height: inherit;
+    width: 3em;
+    padding: 0; border: 0; background: transparent;
+    outline: none;
+    user-select: text; -webkit-user-select: text;
+  }
+  .ml-blank::placeholder { color: #a9a2d6; }
+  .ml-blank.hit { -webkit-text-stroke: .025em currentColor; }
+  .ml-emoji:not(:empty) { margin-left: .15em; }
+  .more-row { display: flex; justify-content: center; margin-top: 18px; }
+  .suggest-more { padding: 6px 14px; font-size: 18px; }
+
   /* ---------- On-screen keyboard ---------- */
   .keyboard { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 4px; margin-top: 18px; /* clears the cards' 10px drop shadow */ }
-  body.mode-pad .keyboard { display: none; }
+  body.mode-pad .keyboard, body.mode-madlibs .keyboard { display: none; }
   .kb-row { display: flex; gap: 8px; }
   .key {
     width: clamp(28px, 8vw, 70px);
@@ -461,6 +508,24 @@
     .tab { flex-direction: column; gap: 0; padding: 4px 10px; font-size: 13px; border-radius: 16px; }
   }
 
+  /* ---------- Hover: every button gets slightly darker ---------- */
+  /* Only where there's a mouse, so a tap on an iPad doesn't leave a button looking dark */
+  @media (hover: hover) {
+    .tab:hover, .icon-btn:hover, .chunky:hover, .key:hover { background: #f1edfb; }
+    .tab.active:hover, .chunky.on:hover { background: #5a4bd6; }
+    .chunky.primary:hover { background: #f0457f; }
+    .chunky.warn:hover { background: #f08a28; }
+    .seg button:hover { background: rgba(45, 42, 74, .07); }
+    .seg button.active:hover { background: #f2c21f; }
+    .key.next:hover { background: #f2c21f; }
+    .word-chip:hover { background: #e9e3fb; }
+    .wp-close:hover { background: #e2dbf7; }
+    .kbar-thumb:hover { background: #5a4bd6; }
+    .ml-slot:hover { background: #e9e3fb; border-bottom-style: solid; }
+    .ml-slot:focus-within:hover { background: #fbe9a6; }
+    .icon-btn:disabled:hover { background: #fff; }
+  }
+
   /* ---------- Printing: just the page of writing ---------- */
   .print-foot { display: none; }
   @media print {
@@ -468,9 +533,11 @@
     html, body { height: auto; overflow: visible; background: #fff; }
     body { display: block; }
     .topbar, .pad-tools, .words-panel, .keyboard, #fx, dialog, .pad-hint, #padInput,
-    .screen:not(#pad) { display: none !important; }
+    .screen { display: none !important; }
     main { padding: 0; }
-    #pad { display: block !important; }
+    body.mode-pad #pad, body.mode-madlibs #madlibs { display: block !important; }
+    .story-card { font-size: min(var(--ml-size, 44px), 30px); overflow: visible; padding: 0; border-radius: 0; box-shadow: none; }
+    .ml-slot, .ml-slot:focus-within { background: none; border-bottom: 0; padding: 0; }
     .paper {
       font-size: min(var(--pad-size), 44px);
       overflow: visible;
@@ -494,7 +561,7 @@
   <div class="logo">Fun<span>pad</span> ✨</div>
   <nav class="tabs">
     <button class="tab" data-mode="pad"><span class="ico">📝</span>Write</button>
-    <button class="tab" data-mode="copy"><span class="ico">🐱</span>Copy-Cat</button>
+    <button class="tab" data-mode="madlibs"><span class="ico">🤪</span>Mad Libs</button>
     <button class="tab" data-mode="monster"><span class="ico">👾</span>Monster</button>
     <button class="tab" data-mode="bubbles"><span class="ico">🫧</span>Bubbles</button>
   </nav>
@@ -511,7 +578,7 @@
     <div class="pad-tools">
       <button class="chunky" id="smallerBtn" aria-label="Smaller letters">🔍 A−</button>
       <button class="chunky" id="biggerBtn" aria-label="Bigger letters">🔍 A+</button>
-      <button class="chunky" id="readBtn"><span class="lbl-read">🔊 Read it</span><span class="lbl-stop">⏹ Stop</span></button>
+      <button class="chunky read-btn" id="readBtn"><span class="lbl-read">🔊 Read it</span><span class="lbl-stop">⏹ Stop</span></button>
       <button class="chunky" id="printBtn">🖨️ Print</button>
       <button class="chunky" id="clearBtn">✨ New page</button>
       <button class="chunky" id="wordsBtn">📖 Magic words</button>
@@ -528,46 +595,65 @@
             <h2>📖 Magic words</h2>
             <button class="wp-close" id="wordsClose" aria-label="Close magic words">✖️</button>
           </div>
-          <div class="seg" id="wordsView">
-            <button data-view="topic">🗂️ Topics</button>
-            <button data-view="az">🔤 A–Z</button>
+          <div class="wp-row">
+            <div class="seg" id="wordsView">
+              <button data-view="topic">🗂️ Topics</button>
+              <button data-view="az">🔤 A–Z</button>
+            </div>
+            <input class="wp-search" id="wordsSearch" type="search" placeholder="🔍 Find a word" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Find a word">
           </div>
-          <input class="wp-search" id="wordsSearch" type="search" placeholder="🔍 Find a word" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Find a word">
-          <div class="wp-count" id="wordsCount"></div>
         </div>
-        <div class="word-scroll" id="wordsList"></div>
+        <div class="wp-body">
+          <div class="word-scroll" id="wordsList"></div>
+          <div class="scroll-col">
+            <button class="icon-btn" id="wordsUp" aria-label="Scroll up">▲</button>
+            <div class="kbar" id="wordsBar"><div class="kbar-thumb" id="wordsThumb"></div></div>
+            <button class="icon-btn" id="wordsDown" aria-label="Scroll down">▼</button>
+          </div>
+        </div>
       </aside>
     </div>
-    <div class="print-foot" id="printFoot"></div>
+    <div class="print-foot"></div>
   </section>
 
-  <!-- Copy-Cat: copy the word under the picture -->
-  <section class="screen" id="copy">
-    <div class="game-top">
-      <div class="seg" id="ccLevels">
-        <button data-level="easy">🐣 Easy</button>
-        <button data-level="medium">🐥 Medium</button>
-        <button data-level="hard">🦅 Hard</button>
-      </div>
-      <div class="score" id="ccStars">0 words</div>
+  <!-- Mad Libs: a story with blanks to fill in -->
+  <section class="screen" id="madlibs">
+    <div class="pad-tools">
+      <button class="chunky" id="mlSmaller" aria-label="Smaller letters">🔍 A−</button>
+      <button class="chunky" id="mlBigger" aria-label="Bigger letters">🔍 A+</button>
+      <button class="chunky read-btn" id="mlRead"><span class="lbl-read">🔊 Read it</span><span class="lbl-stop">⏹ Stop</span></button>
+      <button class="chunky" id="mlPrint">🖨️ Print</button>
+      <button class="chunky" id="mlNew">✨ New story</button>
+      <button class="chunky" id="mlSuggestBtn">💡 Ideas</button>
     </div>
-    <div class="cc-card" id="ccCard">
-      <div class="cc-emoji" id="ccEmoji" title="Hear the word">🐱</div>
-      <div class="boxes" id="ccBoxes"></div>
-      <div class="cc-actions">
-        <button class="chunky primary" id="ccHear">🔊 Hear it</button>
-        <button class="chunky" id="ccSkip">⏭ New word</button>
+    <div class="pad-body">
+      <div class="story-card" id="storyCard">
+        <h2 class="story-title" id="storyTitle"></h2>
+        <div class="story-text" id="storyText"></div>
       </div>
+      <aside class="words-panel" id="suggestPanel" aria-label="Ideas">
+        <div class="wp-head">
+          <div class="wp-title">
+            <h2>💡 Ideas</h2>
+            <button class="wp-close" id="suggestClose" aria-label="Close ideas">✖️</button>
+          </div>
+        </div>
+        <div class="word-scroll">
+          <div class="word-grid" id="suggestList"></div>
+          <div class="more-row"><button class="chunky suggest-more" id="suggestMore">🔀 More ideas</button></div>
+        </div>
+      </aside>
     </div>
+    <div class="print-foot"></div>
   </section>
 
   <!-- Feed the Monster -->
   <section class="screen" id="monster">
     <div class="game-top">
       <div class="seg" id="mLevels">
-        <button data-level="abc">🔤 ABC</button>
-        <button data-level="short">🍪 Short</button>
-        <button data-level="long">🍕 Long</button>
+        <button data-level="easy">🐣 Easy</button>
+        <button data-level="medium">🐥 Medium</button>
+        <button data-level="hard">🦅 Hard</button>
       </div>
       <div class="score" id="fedCount">🍽️ 0 snacks</div>
     </div>
@@ -611,14 +697,14 @@
     <div class="boxes" id="mBoxes"></div>
   </section>
 
-  <!-- Bubble Pop: press the letter to pop its bubble -->
+  <!-- Bubble Pop: type the word to pop its bubble -->
   <section class="screen" id="bubbles">
     <div class="game-top">
       <div class="seg-row">
         <div class="seg" id="bWords">
-          <button data-words="abc">🔤 ABC</button>
-          <button data-words="short">🍪 Short</button>
-          <button data-words="long">🍕 Long</button>
+          <button data-words="easy">🐣 Easy</button>
+          <button data-words="medium">🐥 Medium</button>
+          <button data-words="hard">🦅 Hard</button>
         </div>
         <div class="seg" id="bLevels">
           <button data-level="slow">🐢 Slow</button>
@@ -629,7 +715,7 @@
       <div class="score" id="bScore">🫧 0 popped</div>
     </div>
     <div class="bub-area" id="bubArea">
-      <div class="bub-start" id="bubStart">Press the letter on a bubble to pop it! 🫧</div>
+      <div class="bub-start" id="bubStart">Type the word on a bubble to pop it! 🫧</div>
     </div>
   </section>
 
@@ -666,13 +752,13 @@
   </form>
 </dialog>
 
-<dialog class="dlg" id="clearDlg">
+<dialog class="dlg" id="confirmDlg">
   <form method="dialog">
-    <h2>✨ Start a new page?</h2>
-    <p class="dlg-text">Everything on this page will be cleared.</p>
+    <h2 id="confirmTitle"></h2>
+    <p class="dlg-text" id="confirmText"></p>
     <div class="dlg-actions">
-      <button class="chunky" value="keep">Keep writing</button>
-      <button class="chunky warn" value="clear">🗑 New page</button>
+      <button class="chunky" value="no" id="confirmNo"></button>
+      <button class="chunky warn" value="yes" id="confirmYes"></button>
     </div>
   </form>
 </dialog>
@@ -921,7 +1007,6 @@ function say(text, opts = {}) {
 // In a sentence, voices say a capital letter by its name ("the letter A"); spellings like "ay" get read as words ("eye").
 // A letter spoken on its own goes in lowercase, since a lone capital is read as "capital A".
 const LETTER_NAMES = Object.fromEntries([...'abcdefghijklmnopqrstuvwxyz'].map(c => [c, c.toUpperCase()]));
-const PRAISE = ['Great job!', 'You did it!', 'Awesome!', 'Super!', 'Wow, nice typing!', 'High five!', 'Amazing!'];
 
 /* ================= Effects ================= */
 const fx = $('#fx');
@@ -977,7 +1062,7 @@ function setMode(m) {
   $$('.screen').forEach(s => s.classList.toggle('active', s.id === m));
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   if (m === 'pad') { Pad.render(); Pad.focus(); setNextKey(null); }
-  if (m === 'copy') CopyCat.enter();
+  if (m === 'madlibs') { MadLibs.enter(); setNextKey(null); }
   if (m === 'monster') Monster.enter();
   if (m === 'bubbles') Bubbles.enter();
   else Bubbles.stop();
@@ -1016,8 +1101,7 @@ function flashKey(ch) {
 function gameKey(ch) {
   audio();
   flashKey(ch);
-  if (mode === 'copy') CopyCat.key(ch);
-  else if (mode === 'monster') Monster.key(ch);
+  if (mode === 'monster') Monster.key(ch);
   else if (mode === 'bubbles') Bubbles.key(ch);
 }
 
@@ -1069,6 +1153,49 @@ function wobbleBox(el, i) {
 }
 
 /* ================= Write (notepad) ================= */
+/* ================= Shared page tools (Write and Mad Libs) ================= */
+const stripEmoji = t => t.replace(/\p{Extended_Pictographic}|\uFE0F|\u200D/gu, ' ');
+// The same magic word always gets the same color
+function colorFor(word) {
+  let h = 0;
+  for (const c of word.toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return INKS[h % INKS.length];
+}
+// "Read it" becomes "Stop" while reading aloud; getText says what to read
+function setupReadButton(btn, getText) {
+  let reading = 0; // which read-aloud is running (0 = none), so an old one can't reset a newer one
+  const done = () => { reading = 0; btn.classList.remove('reading'); };
+  btn.addEventListener('click', async () => {
+    if (reading) {
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      done();
+      return;
+    }
+    const id = reading = Date.now();
+    btn.classList.add('reading');
+    await say(getText(), { force: true, rate: 0.85 });
+    // say() can give up waiting on long pages, so also wait until the voice has really finished
+    while (reading === id && 'speechSynthesis' in window && speechSynthesis.speaking) await wait(250);
+    if (reading === id) done();
+  });
+}
+// Asks in the app's own dialog; resolves true for the yes button. The safe answer is focused first.
+function askConfirm(title, text, noLabel, yesLabel) {
+  const dlg = $('#confirmDlg');
+  $('#confirmTitle').textContent = title;
+  $('#confirmText').textContent = text;
+  $('#confirmNo').textContent = noLabel;
+  $('#confirmYes').textContent = yesLabel;
+  dlg.returnValue = ''; // so closing with Esc doesn't reuse last time's answer
+  dlg.showModal();
+  return new Promise(resolve => dlg.addEventListener('close', () => resolve(dlg.returnValue === 'yes'), { once: true }));
+}
+// Printouts end with the date (also for Cmd+P / Ctrl+P)
+window.addEventListener('beforeprint', () => {
+  const date = new Date().toLocaleDateString(undefined, { dateStyle: 'long' });
+  $$('.print-foot').forEach(f => { f.textContent = `Made with Funpad ✨ · ${date}`; });
+});
+
 const Pad = (() => {
   const input = $('#padInput');
   const display = $('#padDisplay');
@@ -1080,11 +1207,6 @@ const Pad = (() => {
   const graphemes = s => (seg ? Array.from(seg.segment(s), x => x.segment) : Array.from(s));
   const isEmoji = g => /\p{Extended_Pictographic}/u.test(g);
   const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-  const colorFor = w => {
-    let h = 0;
-    for (const c of w.toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    return INKS[h % INKS.length];
-  };
 
   input.value = store.get('padText', '');
 
@@ -1150,7 +1272,6 @@ const Pad = (() => {
         input.setSelectionRange(after, after);
         popAt = pos;
         sfx.magic();
-        if (!muted) say(SAY_AS[w[1].toLowerCase()] || w[1], { rate: 1 });
       } else {
         sfx.key();
       }
@@ -1172,41 +1293,13 @@ const Pad = (() => {
     if (!input.value.trim()) { say('Type something first, then you can print it!', { force: true }); return; }
     window.print();
   });
-  // Also runs for Cmd+P / Ctrl+P
-  window.addEventListener('beforeprint', () => {
-    $('#printFoot').textContent = `Made with Funpad ✨ · ${new Date().toLocaleDateString(undefined, { dateStyle: 'long' })}`;
-  });
-  // "Read it" becomes "Stop" while the page is being read aloud
-  const readBtn = $('#readBtn');
-  let reading = 0; // which read-aloud is running (0 = none), so an old one can't reset a newer one
-  function doneReading() {
-    reading = 0;
-    readBtn.classList.remove('reading');
-  }
-  readBtn.addEventListener('click', async () => {
-    if (reading) {
-      if ('speechSynthesis' in window) speechSynthesis.cancel();
-      doneReading();
-      return;
-    }
-    const id = reading = Date.now();
-    readBtn.classList.add('reading');
-    const text = input.value.replace(/\p{Extended_Pictographic}|️|‍/gu, ' ').trim();
-    await say(text || 'Type something first, and I will read it to you!', { force: true, rate: 0.85 });
-    // say() can give up waiting on long pages, so also wait until the voice has really finished
-    while (reading === id && 'speechSynthesis' in window && speechSynthesis.speaking) await wait(250);
-    if (reading === id) doneReading();
-  });
+  setupReadButton($('#readBtn'), () =>
+    stripEmoji(input.value).trim() || 'Type something first, and I will read it to you!');
 
   // "New page" asks first, so the page can't be wiped by accident
-  const clearDlg = $('#clearDlg');
-  $('#clearBtn').addEventListener('click', () => {
+  $('#clearBtn').addEventListener('click', async () => {
     if (!input.value) return;
-    clearDlg.returnValue = ''; // so closing with Esc doesn't reuse last time's answer
-    clearDlg.showModal();
-  });
-  clearDlg.addEventListener('close', () => {
-    if (clearDlg.returnValue === 'clear') {
+    if (await askConfirm('✨ Start a new page?', 'Everything on this page will be cleared.', 'Keep writing', '🗑 New page')) {
       input.value = '';
       store.set('padText', '');
       render();
@@ -1219,116 +1312,362 @@ const Pad = (() => {
   return { render, focus, input };
 })();
 
-/* ================= Picture words (Copy-Cat and Bubbles) ================= */
+/* ================= Picture words for Bubbles, by difficulty ================= */
 const PICTURE_WORDS = {
   easy: withEmoji('cat dog pig cow bee ant owl fox bat bus car sun egg pie hat bed box key map bug hen toy'),
   medium: withEmoji('frog fish bear duck lion goat crab bird cake milk corn pear boat ship ball star moon tree rain snow book bell drum sock shoe gift fire king baby home rose leaf taco'),
   hard: withEmoji('apple horse mouse sheep snake tiger zebra whale shark panda koala bunny puppy snail pizza bread grape lemon candy donut cookie banana cherry carrot robot rocket train truck heart house flower cloud rainbow dragon monkey turtle rabbit penguin unicorn octopus'),
 };
 
-/* ================= Copy-Cat ================= */
-const CopyCat = (() => {
-  const WORDS = PICTURE_WORDS;
-  const bags = {};
-  Object.keys(WORDS).forEach(k => { bags[k] = makeBag(WORDS[k]); });
-  const emojiEl = $('#ccEmoji');
-  const boxesEl = $('#ccBoxes');
-  let level = store.get('ccLevel', 'easy');
-  let stars = store.get('stars', 0);
-  let word = '', emoji = '', pos = 0, misses = 0, busy = false;
+/* ================= Mad Libs ================= */
+// What each kind of blank asks for, and the magic words to suggest for it
+const wordsIn = (topic, skip = '') => {
+  const out = new Set(skip.split(' '));
+  return Object.keys(EMOJI).filter(w => WORD_TOPIC[w] === topic && !out.has(w));
+};
+const wordsFrom = list => list.split(' ').filter(w => EMOJI[w]);
+const BLANKS = {
+  animal: { label: 'animal', words: wordsIn('Animals', 'web spiderweb feather nest paw pet germ shell seashell coral mice dino trex') },
+  food: { label: 'food', words: wordsIn('Food & drink', 'water ice yummy yum delicious tasty breakfast dinner snack dessert bottle lunchbox bento salt grapes hamburger') },
+  place: { label: 'place', words: wordsFrom('house school castle hospital library store farm city town playground stadium circus carnival museum zoo beach forest jungle island desert park mountain volcano ocean') },
+  thing: { label: 'thing', words: wordsIn('Home & things', 'idea light money treasure paper') },
+  toy: { label: 'toy', words: wordsFrom('ball robot teddy toy kite yoyo doll pinata puzzle dice chess trophy medal game balloon') },
+  sport: { label: 'sport', words: wordsFrom('soccer basketball football baseball tennis hockey golf bowling volleyball rugby badminton karate yoga boxing fishing frisbee skiing') },
+  vehicle: { label: 'vehicle', words: wordsIn('Things that go', 'police stop wheel anchor') },
+  feeling: { label: 'feeling', words: wordsFrom('happy sad silly scared sleepy tired sick mad angry funny cool excited surprised shy worried nervous grumpy crazy proud brave yummy hot cold dizzy confused lucky strong quiet sunny') },
+  color: { label: 'color', words: wordsFrom('red blue green yellow purple black white brown pink gray orange gold silver') },
+  body: { label: 'body part', words: wordsIn('Body', 'poop footprint clap strong muscle feet eyes teeth') },
+  person: { label: 'person', words: wordsIn('People & pretend', 'children friends family person') },
+  action: { label: 'action', words: wordsFrom('run swim dance sing eat walk hike climb ski skate surf read write draw drink hide build wash brush clap hug kiss cry laugh sleep yawn sneeze giggle wink paint cook think celebrate') },
+  clothing: { label: 'clothing', words: wordsIn('Clothes', 'ballet') },
+  nature: { label: 'nature', words: wordsIn('Nature, weather & space', 'sunny rainy snowy windy foggy lucky sparkle sparkles stars leaves autumn summer winter night sunrise sunset camping') },
+  number: { label: 'number', words: wordsIn('Numbers') },
+  music: { label: 'instrument', words: wordsFrom('guitar drum piano violin trumpet saxophone banjo accordion flute maracas') },
+};
+// Stories: {kind} marks a blank
+const STORIES = [
+  ['🦖 The Dinosaur Picnic', `One sunny morning, a {color} dinosaur packed a picnic basket. Inside were {number} slices of {food} and one giant {food}. At the {place}, the dinosaur met a {feeling} {animal}. They shared the food and played {sport} all afternoon. On the way home, they did a happy {action} dance. What a {feeling} day!`],
+  ['🚀 My Trip to Space', `Today I flew to the moon in a {color} {vehicle}. I wore my space {clothing} and brought my pet {animal}. On the moon, we found a giant {food} made of cheese. An alien with a {color} {body} waved hello. It wanted to {action} with us! We gave it a {thing} as a present. Then we zoomed home in time for dinner.`],
+  ['🏫 The Silly School Day', `At school today, our teacher was a {feeling} {animal}! In art class, we painted a {color} {thing}. At lunch, I traded my sandwich for a {food}. At recess, we played {sport} with a {person}. Before we went home, the whole class had to {action} for {number} minutes!`],
+  ['🏰 The Brave Knight', `Long ago, in a {color} castle, lived a brave {person}. One day, a {feeling} dragon flew in and stole the king's {thing}! The hero rode a {animal} all the way to the {place}. The dragon was hiding behind a big {nature}. "Give it back!" they shouted. The dragon said, "Only if you {action} with me!" So they did, and then everyone ate {food} together.`],
+  ['🌊 Under the Sea', `Deep under the sea lived a {color} {animal} named Bubbles. Every day, Bubbles wore a tiny {clothing} and swam to the {place}. One day, Bubbles found a treasure chest full of {food}! A {feeling} octopus played a song on the {music}, and all the fish started to {action}. It was the best party in the whole {nature}!`],
+  ['🎂 My Birthday Party', `For my birthday, I want a cake shaped like a {animal}. It will have {number} candles and taste like {food}. All my friends will wear {color} {clothing}. We will play {sport} and {action} until we are {feeling}. The best present will be a {toy} with a big bow on top. Grandma will bring her {music} and sing to me!`],
+  ['🏕️ Camping Adventure', `Our family went camping near the {place}. We set up the tent next to a giant {nature}. At night, we roasted {food} over the fire. Suddenly, we heard a noise. It was a {feeling} {animal} wearing my {clothing}! It wanted to {action} with us. We gave it a {thing}, and it went home happy.`],
+  ['🤖 My Robot Friend', `I built a robot out of an old {thing} and a {color} box. My robot can {action} and talk like a {animal}. Its favorite food is {food}. When it feels {feeling}, its {body} lights up. Every morning, my robot drives me to the {place} in a {vehicle}. Best robot ever!`],
+  ['🎪 The Silly Circus', `Welcome to the circus! First, a {feeling} {animal} rode a tiny {vehicle}. Next, a {person} juggled a {food}, a {thing}, and a {toy}. Then the clowns tried to {action} on a {color} ball. At the end, everyone ate {food} and cheered {number} times!`],
+  ['🪄 The Magic Wand', `I found a magic wand in my {clothing}! When I waved it, my {thing} turned into a {animal}. Then it started to rain {food}! My {person} was so {feeling}. I waved the wand again, and the sky turned {color}. Finally, I wished that I could {action} all day long.`],
+  ['🦁 A Day at the Zoo', `Today my class went to the zoo. The first animal we saw was a {color} {animal} eating {food}. Next, a {feeling} monkey threw a {thing} at the zookeeper! At lunch, a {animal} tried to steal my {food}. Before we left, the giraffe taught us how to {action}. I want to go back {number} more times!`],
+  ['🏖️ Beach Day', `We drove to the beach in our {color} {vehicle}. I wore my favorite {clothing} and built a sandcastle as big as a {animal}. A {feeling} crab pinched my {body}! Then we ate {food} under the umbrella. Dad tried to {action} in the waves and fell over {number} times.`],
+  ['🌧️ The Rainy Day', `It rained all day, so we stayed inside. My sister and I built a fort out of a {thing} and {number} pillows. We pretended a {feeling} {animal} lived inside. For a snack, Mom made warm {food}. Later, we put on our {clothing} and splashed in puddles until we were {feeling}!`],
+  ['🧁 The Silly Bakery', `Welcome to my bakery! Today I baked a cake shaped like a {animal}. It has {color} frosting with {food} on top. My best customer is a {person} who eats {number} cupcakes every morning. When the oven beeps, everyone has to {action}. Come back tomorrow for {food} muffins!`],
+  ['🦸 Super Me', `One morning, I woke up with super powers! I could {action} faster than a {vehicle}. My super suit is {color} with a {animal} on the front. When a {person} lost their {thing}, I flew to the {place} to find it. Everyone cheered, and I felt so {feeling}!`],
+  ['🏴‍☠️ Pirate Treasure', `Captain Pickles sailed a {color} ship across the {nature}. The pirate's parrot was really a {animal}! They followed the map to the {place}, where X marked the spot. They dug {number} big holes and found a chest full of {food}. The pirates were so {feeling} that they started to {action}.`],
+  ['🐄 Down on the Farm', `On Grandpa's farm, there is a {color} barn and a {feeling} {animal}. Every morning, I feed the chickens {food}. Grandpa drives a big {vehicle} through the fields. Yesterday, a cow ate my {clothing}! At night, we sit by the {nature} and listen to the frogs {action}.`],
+  ['⛄ Snow Day', `School was closed because of the snow! I put on my {clothing} and ran outside. We built a snowman with a {food} for a nose and a {thing} for a hat. My brother threw {number} snowballs at a {animal}. Then we drank hot cocoa and felt {feeling}.`],
+  ['🌙 Bedtime', `Every night, I brush my {body} and put on my {color} pajamas. Then I hug my stuffed {animal} and read a book about a {person}. Sometimes I dream that I can {action} on the moon. Last night, I dreamed about a giant {food}! Good night, {nature}!`],
+  ['📚 The Talking Book', `At the {place}, I found a book that could talk! It said, "Please take me home and feed me {food}." The book had a {color} cover and a picture of a {animal}. At home, it read itself to my {person}. Now it wants to {action} every night before bed.`],
+  ['🦷 The Lost Tooth', `My wiggly tooth finally fell out while I was eating {food}! I put it under my pillow. That night, the tooth fairy came riding a {animal}. She left me {number} shiny coins and a tiny {toy}. I was so {feeling} that I wanted to {action} all morning.`],
+  ['🌱 My Garden', `In my garden, I planted {number} seeds. I watered them with a {thing} every day. Soon, a giant {food} grew taller than a {animal}! A {feeling} bunny tried to eat it, so I had to {action} to scare it away. Next year I will grow a {color} {nature}.`],
+  ['🔬 The Science Fair', `For the science fair, I built a machine that turns a {thing} into {food}. It is {color} and makes a noise like a {animal}. When the judge, a {person}, pushed the button, it started to {action}! Everyone was {feeling}. I won {number} gold medals!`],
+  ['🎤 The Talent Show', `At the talent show, my friend played the {music} while standing on one {body}. Next, a {feeling} {person} juggled {number} pieces of {food}. Then it was my turn! I wore a {color} {clothing} and showed everyone how to {action}. The crowd went wild!`],
+  ['🛒 The Grocery Store', `Mom sent me to the store to buy milk and {food}. In aisle {number}, I saw a {animal} pushing a shopping cart! It was buying a {thing} and some {color} {food}. The cashier was a {person} who loved to {action}. I came home with everything except the milk.`],
+  ['✈️ My Airplane Trip', `We flew in an airplane to visit my {person}. The pilot was a {feeling} {animal}! For lunch, they served {food} with {color} sauce. Out the window, I saw a {nature} and a flying {vehicle}. When we landed, everyone had to {action} for {number} minutes.`],
+  ['🚂 The Train Ride', `All aboard the {color} train! Our train had {number} cars, and the last one carried a giant {food}. The conductor was a {person} wearing a {clothing}. We zoomed past a {nature} and a {place}. When the train stopped, everyone had to {action}!`],
+  ['🌳 The Treehouse', `My treehouse is at the top of a giant {nature}. It has a {color} door and a sign that says, "Keep out, {animal}!" Inside, we keep snacks like {food} and a {toy} for rainy days. My friend, a {person}, climbs up to {action} with me. From up high, we can see the whole {place}!`],
+  ['🥚 The Dragon Egg', `I found a {color} egg next to a {nature}. I kept it warm with my {clothing}. One morning, it hatched into a baby dragon! It eats {food} and sleeps in my {thing}. When it sneezes, it makes {number} tiny clouds. My dragon loves to {action} with me.`],
+  ['🦄 The Unicorn Visit', `A unicorn landed in my backyard! Its horn was {color}, and its tail smelled like {food}. It said it came from the {place}. We rode together over a {nature}, and it taught me how to {action}. Before it left, it gave me a magic {thing}. I felt so {feeling}!`],
+  ['🐶 My Robot Dog', `My robot dog is named Sparky. It has {number} legs and a {color} tail. Instead of barking, it sounds like a {animal}. It loves to eat {food} and {action} at the {place}. When it gets {feeling}, its {body} spins around. Best pet ever!`],
+  ['🏫 The First Day of School', `On my first day of school, I wore my new {color} {clothing}. My teacher was a {feeling} {person}. In class, we learned how to {action}. At lunch, I ate {food} with my new friend, who has a pet {animal}. I can't wait to go back tomorrow!`],
+  ['🏛️ The Museum Trip', `At the museum, we saw a dinosaur made of {food}! Next, there was a painting of a {feeling} {animal}. Our guide was a {person} who could {action} backwards. In the gift shop, I bought a {color} {toy}. Museums are so much fun!`],
+  ['🐠 The Aquarium', `At the aquarium, the biggest tank had a {color} {animal} swimming around. A diver fed the fish {food}. A shark waved its {body} at me! My favorite was a tiny fish that liked to {action}. I want to come back {number} more times.`],
+  ['🎣 Fishing with Grandpa', `Grandpa and I went fishing at the {nature}. I used {food} as bait. After {number} hours, I caught a {color} {thing}! Then Grandpa caught a {feeling} {animal}. We laughed so hard that we almost fell out of the {vehicle}.`],
+  ['🥾 The Big Hike', `We hiked up a mountain wearing our {clothing}. On the way, we saw a {animal} eating {food}. At the top, there was a {color} {nature}. We were so {feeling} that we had to {action}. Going down was {number} times faster!`],
+  ['🎩 The Magic Show', `The magician pulled a {animal} out of a hat! Then he made my {person}'s {thing} disappear. Next, he turned a {food} into a {color} {toy}. For the last trick, the whole crowd had to {action}. Everyone was {feeling}!`],
+  ['👵 Cooking with Grandma', `Grandma and I made soup today. We put in {number} carrots, a {food}, and a little {thing}. Grandma stirred it with a giant spoon. It turned {color} and smelled like a {animal}. We were so {feeling} that we had to {action}. It was delicious!`],
+  ['🍕 The Pizza Party', `For my pizza party, we made the biggest pizza in the {place}. We put {food} and {color} cheese on top. A {animal} tried to steal a slice! We each ate {number} slices and then had to {action}. What a {feeling} party!`],
+  ['🍦 The Ice Cream Shop', `At the ice cream shop, I ordered a {color} scoop that tasted like {food}. The person behind the counter was a {feeling} {animal}. They put a {thing} on top instead of a cherry! I ate it so fast that my {body} froze. Next time I want {number} scoops!`],
+  ['🎃 The Halloween Costume', `For Halloween, I dressed up as a {color} {animal}. My costume had a {clothing} and {number} sparkly stars. We knocked on doors, and someone gave us {food}! A neighbor dressed as a {person} jumped out and said, "Boo!" I was so {feeling} that I had to {action}.`],
+  ['🦃 The Big Family Dinner', `My whole family came for dinner. Uncle Joe brought a {food} as big as a {vehicle}. Grandma wore her {color} {clothing}. My cousin spilled {food} on the {animal}! After dinner, we all played {sport}. I was so {feeling}.`],
+  ['🐕 The Pet Show', `I took my {animal} to the pet show. I dressed it in a tiny {clothing}. The judge was a {person} with a {color} hat. My pet did a trick: it could {action} while holding a {thing}! We won first prize: {number} boxes of {food}.`],
+  ['🐹 The Hamster Escape', `Our class hamster escaped! We looked under the {thing} and behind the {music}. Then we found it at the {place}, eating {food}. It was riding a tiny {vehicle}! Our teacher was so {feeling} that she started to {action}.`],
+  ['🛁 Bath Time', `At bath time, I fill the tub with {color} bubbles. I bring my rubber {animal} and a {toy}. Once, I washed my {body} with {food} by mistake! When the bath is over, I wrap up in a {clothing} and {action} to my room. Bath time is so {feeling}!`],
+  ['👽 The Alien Visitor', `An alien knocked on my door! It had {number} eyes and a {color} {body}. It wanted to try {food}, so I gave it some. It said its planet is shaped like a {thing}. Before flying home in its {vehicle}, it taught me how to {action}.`],
+  ['⏰ The Time Machine', `I built a time machine out of a {thing} and a {color} box. First, I went back to see the dinosaurs. A T. rex was eating {food}! Then I zoomed into the future, where people ride a {animal} to work. Everyone could {action} in the air. I came home feeling {feeling}.`],
+  ['🌴 Jungle Explorer', `Deep in the jungle, I found a {color} {animal} hiding behind a {nature}. It was holding a {thing}! We followed a trail of {food} to a secret {place}. A monkey wearing a {clothing} told us to {action}. What an adventure!`],
+  ['🌋 Volcano Island', `We sailed to an island with a {color} volcano. Instead of lava, it shot out {food}! A {feeling} {animal} lived at the top. We climbed up with {number} buckets to catch the snacks. Then we had to {action} all the way back to our {vehicle}.`],
+  ['🧜 The Mermaid', `A mermaid lives in the {nature} near my house. Her tail is {color} and sparkly. She keeps a {animal} as a pet and eats {food} for breakfast. When she sings, all the fish {action}. One day, she gave me a {thing} from her treasure box!`],
+  ['👸 The Princess Who Could', `A princess named Zoey lived in a {color} castle. She didn't like fancy dresses, so she wore a {clothing} instead. Every day, she rode her {animal} to the {place} to play {sport}. When a dragon came, she wasn't scared. She was {feeling} and taught the dragon to {action}!`],
+  ['🧙 Wizard School', `At wizard school, my teacher is a {feeling} {person}. Today we learned a spell that turns a {thing} into a {animal}. My wand is {color} and smells like {food}. When I said the magic words, my {body} started to glow! Then the whole class had to {action}.`],
+  ['👻 The Friendly Ghost', `There is a friendly ghost in our attic. It wears a {color} {clothing} and loves to eat {food}. At night, it plays the {music} very quietly. Its best friend is a {animal}. When I say hello, the ghost likes to {action}. It's not spooky at all!`],
+  ['🔍 Detective Me', `Someone took my {toy}! I put on my detective {clothing} and looked for clues. I found {color} footprints and a piece of {food}. The footprints led to the {place}, where a {feeling} {animal} was hiding. It just wanted to {action} with me!`],
+  ['⚽ The Big Game', `Our {sport} team wore {color} shirts. The other team's goalie was a {animal}! I bounced the ball off my {body} and scored {number} points. The crowd cheered, and we ate {food} to celebrate. I felt so {feeling}!`],
+  ['🏊 The Swimming Lesson', `At my swimming lesson, the teacher was a {feeling} {animal}. First, we practiced blowing bubbles. Then we learned to {action} in the water. I wore my {color} {clothing} and floated like a {thing}. Afterward, I was so hungry that I ate {number} pieces of {food}.`],
+  ['💃 Dance Class', `In dance class, we learned a new dance called the Wiggle Shuffle. You shake your {body} and spin around {number} times. Our teacher, a {person}, played the {music} while we danced. A {feeling} {animal} joined in! Afterward, we all ate {food}.`],
+  ['🎸 Our Rock Band', `My friends and I started a band. I play the {music}, and my friend bangs on a {thing}. Our singer is a {feeling} {animal}. Our first song is all about {food}. When we play, everyone at the {place} starts to {action}!`],
+  ['🎨 Art Class', `In art class, I painted a {color} {animal} eating {food}. My friend made a statue of a {person} out of an old {thing}. The teacher said my painting made her feel {feeling}. We hung it up at the {place} for {number} days!`],
+  ['🤒 Sick Day', `I stayed home sick with a sore {body}. Mom brought me soup made of {food}. I watched a show about a {color} {animal}. My {toy} kept me company all day. By dinner, I felt {feeling} and wanted to {action}.`],
+  ['🩺 The Doctor Visit', `At the doctor's office, the doctor was a {feeling} {animal}. She checked my {body} with a {thing}. She said I was growing as tall as a {nature}! I got a {color} sticker and {number} lollipops. Next time, I want to {action} in the waiting room.`],
+  ['🚒 The Fire Station', `We visited the fire station! The firefighters showed us their {color} {vehicle}. Their pet dog was really a {animal}. We tried on their {clothing} and slid down the pole. For lunch, they cooked {food}. Someday I want to {action} like a firefighter!`],
+  ['🏗️ The Construction Site', `At the construction site, a {color} crane lifted a giant {food}. The workers wore {clothing} and built a house for a {animal}. The boss, a {person}, told everyone to {action}. They finished the house in {number} days!`],
+  ['🐛 The Bug Hunt', `I went on a bug hunt at the {place}. I found a {color} beetle and a {feeling} {animal} under a {nature}. I kept them in a {thing} with some {food}. Then I let them go so they could {action} with their friends.`],
+  ['🐦 Bird Watching', `Grandpa and I went bird watching by the {nature}. We saw a {color} bird with a beak like a {thing}! It was eating {food}. Then {number} more birds flew by. When they saw us, they started to {action}.`],
+  ['☀️ The Weather Report', `Good morning! Here is today's weather. At the {place}, it will rain {food} all day, so wear your {color} {clothing}! Tomorrow will be {feeling}, with a chance of flying {animal}. Don't forget to {action}!`],
+  ['📮 A Postcard from Vacation', `Dear {person}, we are having fun on vacation! Our hotel is shaped like a {food}. Every morning, we see a {color} {animal} on the beach. Yesterday, I learned to {action} in the {nature}. I miss you and my {toy}. Love, me!`],
+  ['🍲 Silly Soup Recipe', `To make silly soup, you need one {food}, {number} cups of water, and a {color} {thing}. Stir it with your {body}. Add a pinch of {animal} hair. Cook it until it smells {feeling}. Then {action} three times and serve!`],
+  ['🧼 How to Wash a Dog', `First, catch your dog. It might run away to the {place}! Then put it in a tub full of {color} bubbles. Scrub its {body} with a {thing}. Give it a treat of {food}. Dry it with your {clothing}. Now your dog will want to {action}!`],
+  ['👫 My Best Friend', `My best friend is a {feeling} {person}. We both love {food} and playing {sport}. Their favorite color is {color}, and they have a pet {animal}. On weekends, we {action} at the {place}. We will be friends forever!`],
+  ['🧺 The Family Picnic', `We had a picnic at the {place}. Mom packed {food} and a {color} cake. Dad brought his {music} and sang silly songs. A {feeling} {animal} ate all our napkins! We played {sport} until the sun went down.`],
+  ['🚗 The Road Trip', `We packed up our {color} {vehicle} for a road trip. I brought my {toy} and {number} bags of {food}. We drove past a {nature} and a {place}. My sister felt {feeling} and sang about a {animal} the whole way!`],
+  ['🏰 The Sandcastle', `At the beach, I built a sandcastle as tall as a {person}. It had {number} towers and a {color} flag. I decorated it with {food} and a {thing}. Then a {feeling} {animal} moved in! It promised to {action} to protect the castle.`],
+  ['⛷️ The Ski Trip', `We went skiing on a snowy {nature}. I wore {color} goggles and my warmest {clothing}. On the way down, I passed a {animal} on skis! I fell {number} times and got snow in my {body}. Then we drank hot {food} by the fire.`],
+  ['🛷 Sledding Hill', `We took our sled to the biggest hill at the {place}. My sled is {color} and shaped like a {animal}. We zoomed down {number} times! At the bottom, we crashed into a {thing}. We were so {feeling} that we had to {action}.`],
+  ['🛌 Pajama Day', `Today was pajama day at school! I wore my {color} pajamas with a {animal} on them. My teacher wore fuzzy slippers shaped like {food}. We had snacks and watched a movie about a {person}. Then we all had to {action} in our pajamas. It was so {feeling}!`],
+  ['🎭 The School Play', `In our school play, I was a {feeling} {animal}. My costume was a {color} {clothing}. My big line was, "I love {food}!" In the middle of the play, a {thing} fell down. Everyone started to {action}, and the audience clapped {number} times!`],
+  ['🛝 Recess', `At recess, I ran to the slide as fast as a {vehicle}. My friends and I played {sport} with a {color} ball. A {animal} wanted to play too! We shared our {food} with it. When the bell rang, we had to {action} back inside.`],
+  ['🍱 My Lunchbox', `Today my lunchbox had a {food} sandwich and {number} {color} grapes. There was also a note from my {person} that said, "Don't let the {animal} eat it!" I traded my {thing} for a cookie. After lunch, I felt {feeling}.`],
+  ['🌅 My Morning', `Every morning, I wake up and stretch my {body}. I eat {food} for breakfast. Then I put on my {color} {clothing} and brush my teeth with a {thing}. My {animal} says goodbye, and I {action} to the bus.`],
+  ['💭 The Strangest Dream', `Last night, I dreamed I was a {color} {animal}. I lived in a {place} made of {food}. My best friend was a talking {thing}. Together, we could {action} above the clouds. When I woke up, I felt {feeling}!`],
+  ['🎅 A Letter to Santa', `Dear Santa, this year I have been very {feeling}. For a present, I would like a {color} {toy} and a pet {animal}. Please bring {food} for my {person}. I will leave you {number} cookies and some milk. Love, me!`],
+  ['💝 The Valentine Card', `I made a valentine for my {person}. It was shaped like a {food} and covered in {color} glitter. Inside, I wrote, "You are as sweet as a {animal}!" I gave it to them at the {place}. They were so {feeling} that they started to {action}.`],
+  ['🛏️ The Monster Under My Bed', `There's a monster under my bed, but it's very nice. It is {color} and has a fuzzy {body}. It loves to eat {food} and hug my {toy}. At night, it tells me stories about a {animal}. When I can't sleep, it helps me {action}. Good night, monster!`],
+  ['🦴 The Fossil Dig', `We went digging for dinosaur bones at the {place}. I found a bone shaped like a {thing}! My friend found a {color} egg. The scientist, a {feeling} {person}, said it came from a dinosaur that ate {food}. We had to {action} to celebrate.`],
+  ['🚀 The Rocket Race', `Three rockets raced to the moon. Mine was {color} and shaped like a {food}. My copilot was a {animal}. On the way, we passed a {nature} floating in space. We won the race in {number} seconds! Everyone on the moon started to {action}.`],
+  ['🍳 The Robot Chef', `Our new robot chef can cook anything! For breakfast, it made {food} pancakes. For lunch, it made a {color} sandwich with a {thing} inside. For dinner, it made soup for our {animal}. Sometimes it gets {feeling} and starts to {action}.`],
+  ['🧸 The Toy Store', `At the toy store, all the toys came alive at night! A {color} {toy} danced with a stuffed {animal}. A toy {vehicle} raced around a {thing}. The store owner, a {person}, heard them and started to {action}. Everyone was {feeling}!`],
+  ['🐾 The Vet', `My {animal} was feeling {feeling}, so we went to the vet. The vet looked at its {body} and said it ate too much {food}. She gave it a {color} bandage and a tiny {toy}. Now my pet can {action} again!`],
+  ['🍋 The Lemonade Stand', `I opened a lemonade stand at the {place}. My lemonade was {color} and tasted like {food}. My first customer was a {animal} with {number} coins. Then a {person} bought a cup and started to {action}. I sold out by lunch!`],
+  ['🍨 The Ice Cream Truck', `I heard the ice cream truck coming down the street! The driver was a {feeling} {animal}. I ordered a {color} pop shaped like a {thing}. It tasted like {food}! My friend got {number} scoops. We ate so fast that we had to {action}.`],
+  ['🗺️ The Treasure Hunt', `My {person} hid a treasure in our backyard. The first clue was under a {thing}. The second clue was inside a {food}! The last clue said, "Go to the {nature} and {action} three times." Then we found it: a {color} box with a {toy} inside!`],
+  ['🎡 The County Fair', `At the fair, we rode a {color} ferris wheel. I won a giant stuffed {animal} by throwing a {thing}. We ate {food} on a stick! Then we saw a {feeling} pig who could {action}. I want to go every year!`],
+  ['🚌 The School Bus', `Our school bus driver is a {feeling} {animal}. The bus is {color} and goes {number} miles an hour. Every morning, we sing a song about {food}. Today, the bus stopped at the {place} so we could {action}!`],
+  ['🐧 The Penguin Parade', `At the South Pole, {number} penguins had a parade. The leader wore a {color} {clothing}. They marched past a {nature} and a {feeling} {animal}. At the end, everyone shared {food} and danced on the ice!`],
+  ['🚁 The Helicopter Rescue', `A {animal} got stuck on top of a {nature}! The rescue team flew in a {color} helicopter. A brave {person} climbed down a rope holding a {thing}. They saved the day and shared a snack of {food}. Everyone cheered and started to {action}.`],
+  ['🎈 The Balloon Ride', `We rode in a hot air balloon shaped like a {food}. It was {color} with {number} stripes. We floated over the {place} and waved at a {animal}. The wind blew my {clothing} away! We landed softly and decided to {action}.`],
+  ['📸 Picture Day', `On picture day, I wore my {color} {clothing}. The photographer said, "Say {food}!" Just then, a {animal} jumped into the picture. My hair stuck up like a {thing}. Now my picture looks {feeling}, and I love it!`],
+  ['🌻 The Sunflower Contest', `I grew a sunflower as tall as a {vehicle}! I fed it {food} and sang to it every day. At the contest, the judge was a {feeling} {person}. My sunflower was {color} and had {number} petals. I won a {toy} as a prize!`],
+  ['🏆 The Big Race', `Today was the big race at the {place}. I ran against a {animal}, a {person}, and a {vehicle}. Halfway through, I stopped to eat {food}. Then I put on my {color} {clothing} and ran faster than ever. I won and got to {action} on the podium!`],
+];
 
-  function paintLevels() {
-    $$('#ccLevels button').forEach(b => b.classList.toggle('active', b.dataset.level === level));
+const MadLibs = (() => {
+  const card = $('#storyCard');
+  const title = $('#storyTitle');
+  const textEl = $('#storyText');
+  const panel = $('#suggestPanel');
+  const suggestBtn = $('#mlSuggestBtn');
+  const SIZES = [28, 36, 44, 56, 72];
+  let sizeIdx = store.get('mlSize', 2);
+  let storyIdx = store.get('mlStory', -1);
+  let blanks = []; // { kind, input, emoji, shown } for each blank
+  let current = 0; // the blank being filled in
+  const measure = document.createElement('canvas').getContext('2d');
+  let announced = -1; // the blank whose type was last read out
+  // Mad Libs speech takes turns, and a prompt is skipped if you've already moved past that blank
+  let speech = Promise.resolve();
+  function speak(text, stillWanted = () => true) {
+    speech = speech.then(() => (mode === 'madlibs' && stillWanted() ? say(text, { rate: 1 }) : null));
   }
-  function paintStars() {
-    $('#ccStars').textContent = `${stars} word${stars === 1 ? '' : 's'}`;
+
+  function applySize() {
+    card.style.setProperty('--ml-size', SIZES[sizeIdx] + 'px');
+    store.set('mlSize', sizeIdx);
+    blanks.forEach(fitWidth);
   }
-  function next() {
-    [word, emoji] = bags[level]();
-    pos = 0; misses = 0; busy = false;
-    emojiEl.textContent = emoji;
-    emojiEl.classList.remove('cheer');
-    renderBoxes(boxesEl, word, pos);
-    paintStars();
-    setNextKey(word[0]);
-    if (mode === 'copy') say(word);
+  // Each blank grows to fit what's typed (or its label when empty)
+  function fitWidth(b) {
+    const cs = getComputedStyle(b.input);
+    const size = parseFloat(cs.fontSize);
+    measure.font = `${cs.fontWeight} ${size}px ${cs.fontFamily}`;
+    const w = measure.measureText(b.input.value || b.input.placeholder).width;
+    b.input.style.width = (w / size + 0.08).toFixed(3) + 'em'; // in em, so it fits at any text size
+  }
+  if (document.fonts) document.fonts.ready.then(() => blanks.forEach(fitWidth));
+  function save() {
+    store.set('mlStory', storyIdx);
+    store.set('mlWords', blanks.map(b => b.input.value));
+  }
+
+  function build(saved = []) {
+    const [name, text] = STORIES[storyIdx];
+    title.textContent = name;
+    textEl.replaceChildren();
+    blanks = [];
+    // Split the story into plain text and {kind} blanks
+    for (const part of text.split(/(\{[a-z]+\})/)) {
+      const m = part.match(/^\{([a-z]+)\}$/);
+      if (!m) { textEl.append(part); continue; }
+      const i = blanks.length;
+      const slot = Object.assign(document.createElement('span'), { className: 'ml-slot' });
+      const input = Object.assign(document.createElement('input'), {
+        className: 'ml-blank', placeholder: BLANKS[m[1]].label, value: saved[i] || '',
+        autocomplete: 'off', spellcheck: false,
+      });
+      input.setAttribute('autocapitalize', 'off');
+      input.setAttribute('autocorrect', 'off');
+      input.setAttribute('aria-label', BLANKS[m[1]].label);
+      const emoji = Object.assign(document.createElement('span'), { className: 'ml-emoji' });
+      slot.append(input, emoji);
+      slot.addEventListener('click', () => input.focus()); // tapping the emoji also edits the blank
+      textEl.append(slot);
+      const b = { kind: m[1], input, emoji, shown: null };
+      blanks.push(b);
+      wire(b, i);
+    }
+    blanks.forEach(b => { fitWidth(b); commit(b, false); });
+    current = Math.max(0, blanks.findIndex(b => !b.input.value));
+    announced = -1;
+    card.scrollTop = 0;
+    paintSuggestions();
+    save();
+  }
+
+  // When a blank is finished: color a magic word and add its emoji
+  function commit(b, celebrate = true) {
+    const word = b.input.value.trim();
+    const last = (word.match(/[A-Za-z]+$/) || [''])[0];
+    const em = last ? lookupEmoji(last) : null;
+    b.input.style.color = em ? colorFor(last) : '';
+    b.input.classList.toggle('hit', !!em);
+    if (word === b.shown) return;
+    b.shown = word;
+    b.emoji.textContent = em || '';
+    save();
+    if (em && celebrate) {
+      const [x, y] = centerOf(b.emoji);
+      floatEmoji(em, x, y, SIZES[sizeIdx] * 2);
+      confetti(x, y, 18);
+      sfx.magic();
+    }
+  }
+  function goTo(i) {
+    current = Math.max(0, Math.min(blanks.length - 1, i));
+    blanks[current].input.focus();
+  }
+  const spoken = b => {
+    const word = b.input.value.trim();
+    return SAY_AS[word.toLowerCase()] || word;
+  };
+  // Read out the word already in a blank, or what kind of word goes there.
+  // Once per visit, so refocusing after a toolbar button stays quiet.
+  function announceBlank(i) {
+    if (announced === i || !blanks[i]) return;
+    announced = i;
+    const b = blanks[i];
+    const type = BLANKS[b.kind].label;
+    speak(b.input.value.trim() ? spoken(b) : `Enter ${/^[aeiou]/.test(type) ? 'an' : 'a'} ${type}`, () => current === i);
+  }
+  function wire(b, i) {
+    b.input.addEventListener('focus', () => {
+      current = i;
+      paintSuggestions();
+      announceBlank(i);
+    });
+    // Clicking a filled blank you're already in reads its word again
+    const slot = b.input.parentElement;
+    let wasHere = false;
+    slot.addEventListener('pointerdown', () => { wasHere = document.activeElement === b.input; });
+    slot.addEventListener('click', () => {
+      if (wasHere && b.input.value.trim()) speak(spoken(b), () => current === i);
+    });
+    b.input.addEventListener('blur', () => commit(b));
+    b.input.addEventListener('input', e => {
+      fitWidth(b);
+      if (e.inputType && e.inputType.startsWith('insert')) sfx.key();
+      if (b.input.value.trim() !== b.shown) { b.emoji.textContent = ''; b.shown = null; }
+      save();
+    });
+    // Space, Enter or Tab finishes the blank and moves on (Shift+Tab goes back)
+    b.input.addEventListener('keydown', e => {
+      const back = e.key === 'Tab' && e.shiftKey;
+      if (e.key === 'Enter' || e.key === 'Tab' || (e.key === ' ' && b.input.value.trim())) {
+        e.preventDefault();
+        commit(b);
+        if (back) goTo(i - 1);
+        else if (i < blanks.length - 1) goTo(i + 1);
+      } else if (e.key === ' ') {
+        e.preventDefault(); // no leading spaces in an empty blank
+      }
+    });
+  }
+
+  // Ideas: up to 15 magic words that fit the current blank; tapping one reads it out
+  function paintSuggestions() {
+    if (!panel.classList.contains('open') || !blanks.length) return;
+    const kind = blanks[current].kind;
+    const ideas = [...BLANKS[kind].words].sort(() => Math.random() - 0.5).slice(0, 15).sort();
+    $('#suggestList').replaceChildren(...ideas.map(w => {
+      const chip = Object.assign(document.createElement('button'), { className: 'word-chip', textContent: `${EMOJI[w]} ${w}` });
+      chip.addEventListener('pointerdown', e => e.preventDefault()); // keep the blank focused
+      chip.addEventListener('click', () => say(SAY_AS[w] || w, { force: true }));
+      return chip;
+    }));
+  }
+  function setPanel(open) {
+    panel.classList.toggle('open', open);
+    suggestBtn.classList.toggle('on', open);
+    store.set('mlSuggestOpen', open);
+    paintSuggestions();
+  }
+
+  function newStory() {
+    let i = storyIdx;
+    while (STORIES.length > 1 && i === storyIdx) i = Math.floor(Math.random() * STORIES.length);
+    storyIdx = i;
+    build();
+    focus();
+  }
+  // The title and story with the blanks filled in ("blank" where nothing's written yet)
+  function storyText() {
+    let k = 0;
+    const story = STORIES[storyIdx][1].replace(/\{[a-z]+\}/g, () => blanks[k++].input.value.trim() || 'blank');
+    return `${stripEmoji(title.textContent).trim()}. ${story}`;
+  }
+  function focus() {
+    if (blanks.length) blanks[current].input.focus({ preventScroll: false });
   }
   function enter() {
-    paintLevels();
-    if (!word) next();
-    else { setNextKey(word[pos]); say(word); }
-  }
-  async function win(lastLetter) {
-    busy = true;
-    stars++;
-    store.set('stars', stars);
-    const fiveStars = stars % 5 === 0;
-    paintStars();
-    setNextKey(null);
-    sfx.win();
-    emojiEl.classList.add('cheer');
-    const [x, y] = centerOf(emojiEl);
-    confetti(x, y, 40);
-    const t0 = Date.now();
-    await say(lastLetter, { rate: 1.1 });
-    await say(`${word}! ${pick(PRAISE)}`);
-    if (fiveStars) {
-      bigCelebration();
-      sfx.win();
-      await say('Five stars! You are a super star!');
+    if (!blanks.length) {
+      if (!STORIES[storyIdx]) storyIdx = Math.floor(Math.random() * STORIES.length);
+      build(store.get('mlWords', []));
     }
-    await wait(Math.max(200, 1400 - (Date.now() - t0)));
-    if (mode === 'copy') next();
-    else word = '';
-  }
-  function key(ch) {
-    if (busy || !word) return;
-    if (ch === word[pos]) {
-      markBox(boxesEl, pos);
-      sfx.good(pos);
-      pos++;
-      misses = 0;
-      if (pos === word.length) win(ch);
-      else { setNextKey(word[pos]); say(ch, { rate: 1.1 }); }
-    } else {
-      sfx.oops();
-      wobbleBox(boxesEl, pos);
-      misses++;
-      if (misses >= 2) {
-        setNextKey(word[pos], true);
-        say(`Find the letter ${LETTER_NAMES[word[pos]]}`);
-      }
+    announced = -1; // prompt for the current blank every time the tab opens
+    focus();
+    announceBlank(current); // in case the focus event didn't fire
+    // Browsers block speech until the first tap or key press, so say it again then
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+      const later = () => {
+        removeEventListener('pointerdown', later, true);
+        removeEventListener('keydown', later, true);
+        if (mode === 'madlibs') { announced = -1; announceBlank(current); }
+      };
+      addEventListener('pointerdown', later, true);
+      addEventListener('keydown', later, true);
     }
   }
 
-  $$('#ccLevels button').forEach(b => b.addEventListener('click', () => {
-    level = b.dataset.level;
-    store.set('ccLevel', level);
-    paintLevels();
-    next();
-  }));
-  $('#ccHear').addEventListener('click', () => say(word, { force: true }));
-  emojiEl.addEventListener('click', () => say(word, { force: true }));
-  $('#ccSkip').addEventListener('click', () => { if (!busy) next(); });
+  $('#mlSmaller').addEventListener('click', () => { sizeIdx = Math.max(0, sizeIdx - 1); applySize(); });
+  $('#mlBigger').addEventListener('click', () => { sizeIdx = Math.min(SIZES.length - 1, sizeIdx + 1); applySize(); });
+  $('#mlPrint').addEventListener('click', () => window.print());
+  setupReadButton($('#mlRead'), storyText);
+  $('#mlNew').addEventListener('click', newStory);
+  suggestBtn.addEventListener('click', () => setPanel(!panel.classList.contains('open')));
+  $('#suggestClose').addEventListener('click', () => setPanel(false));
+  $('#suggestMore').addEventListener('pointerdown', e => e.preventDefault());
+  $('#suggestMore').addEventListener('click', paintSuggestions);
 
-  paintStars();
-  return { enter, key };
+  applySize();
+  setPanel(store.get('mlSuggestOpen', false));
+  return { enter, focus };
 })();
 
 /* ================= Feed the Monster ================= */
 const Monster = (() => {
-  const ABC = [
-    ['a', 'apple'], ['b', 'banana'], ['c', 'cookie'], ['d', 'donut'], ['e', 'egg'], ['f', 'fries'],
-    ['g', 'grapes'], ['h', 'hotdog'], ['i', 'icecream'], ['j', 'juice'], ['k', 'key'], ['l', 'lemon'],
-    ['m', 'milk'], ['n', 'noodles'], ['o', 'orange'], ['p', 'pizza'], ['q', 'queen'], ['r', 'rice'],
-    ['s', 'strawberry'], ['t', 'taco'], ['u', 'umbrella'], ['v', 'volcano'], ['w', 'watermelon'],
-    ['x', 'box'], ['y', 'yam'], ['z', 'zebra'],
-  ].map(([l, w]) => [l, w, EMOJI[w]]);
+  // Snacks (and silly things) for the monster: 3-letter, 4-letter and 5+ letter words
   const FOODS = {
-    short: withEmoji('cake pie egg corn pear milk taco sock shoe hat key car bus bell book star moon ball fish rice'),
-    long: withEmoji('cookie pizza apple donut candy grape lemon banana carrot cheese burger bread cherry popcorn rocket robot cupcake rainbow crown cloud'),
+    easy: withEmoji('pie egg key car bus hat sun box toy bed map ice nut yam tea pen cap gem'),
+    medium: withEmoji('cake corn pear milk taco sock shoe bell book star moon ball fish rice soup kiwi drum gift ring coin lamp leaf kite'),
+    hard: withEmoji('cookie pizza apple donut candy grape lemon banana carrot cheese burger bread cherry popcorn rocket robot cupcake rainbow crown cloud pancake waffle pretzel sandwich mango coconut muffin pickle tomato potato noodles'),
   };
-  const bags = { abc: makeBag(ABC), short: makeBag(FOODS.short), long: makeBag(FOODS.long) };
+  const bags = { easy: makeBag(FOODS.easy), medium: makeBag(FOODS.medium), hard: makeBag(FOODS.hard) };
   const ASK = ["I'm hungry for", 'Feed me', 'Ooh, can I have', 'Gimme gimme', 'My tummy wants'];
   const YUM = ['Yum yum!', 'Delicious!', 'Mmm, tasty!', 'Nom nom nom!', 'Thank you!', 'Yummy in my tummy!'];
   const COLORS = [
@@ -1342,7 +1681,8 @@ const Monster = (() => {
   const foodEmoji = $('#foodEmoji');
   const bubble = $('#mBubble');
   const boxesEl = $('#mBoxes');
-  let level = store.get('mLevel', 'abc');
+  let level = store.get('mLevel', 'easy');
+  if (!bags[level]) level = 'easy'; // older saved choices (ABC, Short, Long) are gone
   let fed = store.get('fed', 0);
   let target = '', speech = '', pos = 0, misses = 0, busy = false;
   let cur = { x: 0, y: 0 };
@@ -1371,24 +1711,11 @@ const Monster = (() => {
 
   function next() {
     const item = bags[level]();
-    let word, em;
-    if (level === 'abc') {
-      const [l, w, e] = item;
-      target = l; word = w; em = e;
-      bubble.innerHTML = `<div class="b-line">I'm hungry for the letter</div>
-        <div class="b-word">${l}</div>
-        <div class="b-sub">${l === 'x' ? 'like the end of' : 'like'} ${em} ${SAY_AS[w] || w}</div>`;
-      // Say the letter only once; a sentence starting with "A is…" gets read as the word "a"
-      speech = l === 'x'
-        ? `I'm hungry for the letter X, like the end of box!`
-        : `I'm hungry for the letter ${LETTER_NAMES[l]}, like ${SAY_AS[w] || w}!`;
-    } else {
-      [word, em] = item;
-      target = word;
-      const ask = pick(ASK);
-      bubble.innerHTML = `<div class="b-line">${ask}…</div><div class="b-word">${em} ${word}</div>`;
-      speech = `${ask} ${word}!`;
-    }
+    const [word, em] = item;
+    target = word;
+    const ask = pick(ASK);
+    bubble.innerHTML = `<div class="b-line">${ask}…</div><div class="b-word">${em} ${word}</div>`;
+    speech = `${ask} ${word}!`;
     pos = 0; misses = 0; busy = false;
     food.getAnimations().forEach(a => a.cancel());
     food.style.visibility = '';
@@ -1489,26 +1816,23 @@ const Monster = (() => {
 
 /* ================= Bubble Pop ================= */
 const Bubbles = (() => {
-  // max: letter bubbles on screen at once (words are always one at a time);
-  // rise: seconds to float to the top; gap: ms between new bubbles
-  const LEVELS = {
-    slow: { max: 1, rise: 16, gap: 600 },
-    medium: { max: 2, rise: 10, gap: 2000 },
-    fast: { max: 3, rise: 7, gap: 1400 },
-  };
+  // Seconds for a bubble to float to the top. One bubble at a time; the next comes shortly after.
+  const LEVELS = { slow: { rise: 16 }, medium: { rise: 10 }, fast: { rise: 7 } };
+  const PAUSE = 700; // ms between one bubble leaving and the next one appearing
   const area = $('#bubArea');
   const startMsg = $('#bubStart');
-  // Each item is [text, emoji]; ABC bubbles are single letters with no picture
+  // Each item is [word, emoji]
   const bags = {
-    abc: makeBag([...'abcdefghijklmnopqrstuvwxyz'].map(c => [c, ''])),
-    short: makeBag([...PICTURE_WORDS.easy, ...PICTURE_WORDS.medium]),
-    long: makeBag(PICTURE_WORDS.hard),
+    easy: makeBag(PICTURE_WORDS.easy),
+    medium: makeBag(PICTURE_WORDS.medium),
+    hard: makeBag(PICTURE_WORDS.hard),
   };
   let level = store.get('bLevel', 'slow');
-  let words = store.get('bWords', 'abc');
+  let words = store.get('bWords', 'easy');
+  if (!bags[words]) words = 'easy'; // older saved choices (ABC, Short, Long) are gone
   let popped = store.get('popped', 0);
   let bubbles = [];
-  let raf = 0, last = 0, sinceSpawn = 0, misses = 0;
+  let raf = 0, last = 0, emptyFor = Infinity, misses = 0;
   let target = null; // the bubble to type next (glows)
   let active = null; // a word bubble that's partly typed
   // Bubble speech takes turns, so a new bubble never cuts off the one before it
@@ -1522,15 +1846,11 @@ const Bubbles = (() => {
   function paintLevels() {
     $$('#bLevels button').forEach(b => b.classList.toggle('active', b.dataset.level === level));
     $$('#bWords button').forEach(b => b.classList.toggle('active', b.dataset.words === words));
-    startMsg.textContent = words === 'abc'
-      ? 'Press the letter on a bubble to pop it! 🫧'
-      : 'Type the word on a bubble to pop it! 🫧';
   }
   function paintScore() {
     $('#bScore').textContent = `🫧 ${popped} popped`;
   }
   function paintBubble(b) {
-    if (b.text.length === 1) { b.el.textContent = b.text; return; }
     const done = Object.assign(document.createElement('span'), { className: 'bw-done', textContent: b.text.slice(0, b.typed) });
     const word = document.createElement('span');
     word.append(done, b.text.slice(b.typed));
@@ -1539,39 +1859,26 @@ const Bubbles = (() => {
     b.el.replaceChildren(wrap);
   }
   function spawn() {
-    // No two bubbles start with the same letter, so the first key picks one bubble
-    const starts = new Set(bubbles.map(o => o.text[0]));
-    let item = bags[words]();
-    for (let i = 0; i < 5 && starts.has(item[0][0]); i++) item = bags[words]();
-    if (starts.has(item[0][0])) return;
-    const [text, emoji] = item;
-    const wordy = text.length > 1;
+    const [text, emoji] = bags[words]();
     const base = Math.min(150, Math.max(90, area.clientHeight * 0.22)) * (0.9 + Math.random() * 0.2);
-    const size = Math.round(wordy ? Math.min(base * 1.4, area.clientHeight * 0.45) : base);
+    const size = Math.round(Math.min(base * 1.4, area.clientHeight * 0.45));
     const el = document.createElement('div');
-    el.className = 'bub' + (wordy ? ' wordy' : '');
+    el.className = 'bub wordy';
     el.style.setProperty('--s', size + 'px');
     const hue = Math.floor(Math.random() * 360);
     el.style.setProperty('--h', hue);
     el.style.setProperty('--f', Math.min(0.4, 1.5 / text.length)); // longer words get smaller letters
     area.appendChild(el);
-    // Start away from the other bubbles, so words don't cover each other
-    const room = Math.max(0, area.clientWidth - size - 40);
-    const gapTo = x => Math.min(Infinity, ...bubbles.map(o => Math.abs(o.x + o.size / 2 - (x + size / 2))));
-    let x = Math.random() * room + 20;
-    for (let i = 0; i < 8; i++) {
-      const tryX = Math.random() * room + 20;
-      if (gapTo(tryX) > gapTo(x)) x = tryX;
-    }
+    const x = Math.random() * Math.max(0, area.clientWidth - size - 40) + 20;
     const b = { el, text, emoji, hue, typed: 0, size, x, p: 0, phase: Math.random() * 6 };
     paintBubble(b);
     bubbles.push(b);
-    sinceSpawn = 0;
     announce(SAY_AS[text] || text, b);
     startMsg.style.display = 'none';
   }
   function remove(b) {
     bubbles = bubbles.filter(o => o !== b);
+    emptyFor = 0; // short pause before the next bubble
     if (b === active) active = null;
     if (b === target) target = null;
   }
@@ -1589,9 +1896,10 @@ const Bubbles = (() => {
     const dt = Math.min(0.05, (t - last) / 1000);
     last = t;
     const L = LEVELS[level];
-    sinceSpawn += dt * 1000;
-    const max = words === 'abc' ? L.max : 1;
-    if (bubbles.length < max && (sinceSpawn > L.gap || !bubbles.length)) spawn();
+    if (!bubbles.length) {
+      emptyFor += dt * 1000;
+      if (emptyFor > PAUSE) spawn();
+    }
     const H = area.clientHeight, W = area.clientWidth;
     for (const b of [...bubbles]) {
       b.p += dt / L.rise;
@@ -1624,7 +1932,7 @@ const Bubbles = (() => {
     bubbles.forEach(b => b.el.remove());
     bubbles = [];
     target = active = null;
-    sinceSpawn = 0;
+    emptyFor = Infinity; // the next bubble comes right away
     startMsg.style.display = '';
   }
   function pop(b) {
@@ -1638,8 +1946,6 @@ const Bubbles = (() => {
     popped++;
     store.set('popped', popped);
     paintScore();
-    // A new bubble comes up soon after a pop
-    sinceSpawn = Math.max(sinceSpawn, LEVELS[level].gap - 500);
     if (popped % 10 === 0) {
       bigCelebration();
       sfx.win();
@@ -1791,7 +2097,7 @@ onVoicesLoaded = VoiceSettings.fill;
     list.replaceChildren();
     if (view === 'az') {
       for (const letter of [...new Set(shown.map(en => en.text[0]))]) {
-        addGroup(letter, shown.filter(en => en.text[0] === letter));
+        addGroup(letter.toUpperCase(), shown.filter(en => en.text[0] === letter));
       }
     } else {
       for (const topic of topicOrder) {
@@ -1802,10 +2108,8 @@ onVoicesLoaded = VoiceSettings.fill;
     if (!shown.length) {
       list.append(Object.assign(document.createElement('div'), { className: 'word-empty', textContent: `No magic word like “${q}” yet` }));
     }
-    $('#wordsCount').textContent = q
-      ? `${shown.length} found`
-      : `${entries.length} words · tap one to hear it`;
     $$('#wordsView button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    paintScroll();
   }
   function setOpen(open) {
     panel.classList.toggle('open', open);
@@ -1816,6 +2120,49 @@ onVoicesLoaded = VoiceSettings.fill;
 
   btn.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
   $('#wordsClose').addEventListener('click', () => setOpen(false));
+
+  // Up/down buttons scroll most of a screenful; each fades out at its end of the list
+  const up = $('#wordsUp');
+  const down = $('#wordsDown');
+  const bar = $('#wordsBar');
+  const thumb = $('#wordsThumb');
+  const maxScroll = () => list.scrollHeight - list.clientHeight;
+  function paintScroll() {
+    up.disabled = list.scrollTop <= 0;
+    down.disabled = list.scrollTop + list.clientHeight >= list.scrollHeight - 1;
+    // The handle's size shows how much of the list is on screen; its position shows where you are
+    const trackH = bar.clientHeight;
+    const thumbH = Math.min(trackH, Math.max(64, trackH * list.clientHeight / list.scrollHeight));
+    const max = maxScroll();
+    thumb.style.height = thumbH + 'px';
+    thumb.style.transform = `translateY(${max > 0 ? (list.scrollTop / max) * (trackH - thumbH) : 0}px)`;
+    bar.classList.toggle('idle', max <= 0);
+  }
+  // Drag the handle, or press anywhere on the bar: the handle jumps there and keeps following your finger
+  bar.addEventListener('pointerdown', e => {
+    e.preventDefault(); // keep typing focus in the notepad
+    const onThumb = e.target === thumb;
+    const grab = onThumb ? e.clientY - thumb.getBoundingClientRect().top : thumb.offsetHeight / 2;
+    const follow = ev => {
+      const free = bar.clientHeight - thumb.offsetHeight;
+      const y = ev.clientY - bar.getBoundingClientRect().top - grab;
+      list.scrollTop = free > 0 ? Math.min(1, Math.max(0, y / free)) * maxScroll() : 0;
+    };
+    const stop = () => {
+      bar.classList.remove('dragging');
+      bar.removeEventListener('pointermove', follow);
+    };
+    bar.setPointerCapture(e.pointerId);
+    bar.classList.add('dragging');
+    if (!onThumb) follow(e);
+    bar.addEventListener('pointermove', follow);
+    bar.addEventListener('pointerup', stop, { once: true });
+    bar.addEventListener('pointercancel', stop, { once: true });
+  });
+  up.addEventListener('click', () => list.scrollBy({ top: -list.clientHeight * 0.7, behavior: 'smooth' }));
+  down.addEventListener('click', () => list.scrollBy({ top: list.clientHeight * 0.7, behavior: 'smooth' }));
+  list.addEventListener('scroll', paintScroll);
+  new ResizeObserver(paintScroll).observe(list);
   $$('#wordsView button').forEach(b => b.addEventListener('click', () => {
     view = b.dataset.view;
     store.set('wordsTab', view);
@@ -1838,6 +2185,11 @@ document.addEventListener('keydown', e => {
     if (el !== Pad.input && !(el && el.closest && el.closest('.words-panel'))) Pad.focus();
     return;
   }
+  if (mode === 'madlibs') {
+    const el = document.activeElement;
+    if (!(el && el.classList && el.classList.contains('ml-blank'))) MadLibs.focus();
+    return;
+  }
   if (/^[a-zA-Z]$/.test(e.key)) {
     e.preventDefault();
     gameKey(e.key.toLowerCase());
@@ -1851,10 +2203,12 @@ document.addEventListener('click', e => {
   if (!b || b.closest('dialog')) return;
   b.blur();
   if (mode === 'pad' && !b.classList.contains('tab')) Pad.focus();
+  if (mode === 'madlibs' && !b.classList.contains('tab')) MadLibs.focus();
 });
 
 paintToggles();
-setMode(store.get('mode', 'pad'));
+const savedMode = store.get('mode', 'pad');
+setMode(['pad', 'madlibs', 'monster', 'bubbles'].includes(savedMode) ? savedMode : 'pad');
 </script>
 </body>
 </html>
